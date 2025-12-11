@@ -68,27 +68,14 @@
     };
   };
 
-  # Alacritty 配置：启动时自动附着或创建 Zellij 会话
-  programs.alacritty = {
-    enable = true;
-    settings = {
-      shell = {
-        program = "${pkgs.zellij}/bin/zellij";
-        args = [ "attach" "--create" ];
-      };
-    };
-  };
-
   # 5. FZF 模块 (配色已调整为 Solarized 风格)
   programs.fzf = {
     enable = true;
     enableFishIntegration = true;
-    # 这里的命令不需要手动加 exclude，因为会自动读取 programs.fd 的全局配置
     defaultCommand = "fd --type f --strip-cwd-prefix --hidden --follow";
     changeDirWidgetCommand = "fd --type d --strip-cwd-prefix --hidden --follow";
     fileWidgetCommand = "fd --type f --strip-cwd-prefix --hidden --follow";
     
-    # 配色方案：Solarized Dark
     defaultOptions = [ 
       "--height 40%" 
       "--layout=reverse" 
@@ -122,7 +109,7 @@
     enableFishIntegration = true;
   };
 
-  # ⬇️ 关键修改：FD 黑名单 (解决搜出一堆乱七八糟文件的问题)
+  # 7. FD 黑名单 (解决搜出一堆乱七八糟文件的问题)
   programs.fd = {
     enable = true;
     hidden = true; 
@@ -130,28 +117,16 @@
       ".git/"
       "node_modules/"
       
-      # --- 你的截图里出现的捣乱分子 ---
-      ".cache/"       # 缓存目录 (大量垃圾)
-      ".local/"       # 本地数据 (大量垃圾)
-      ".npm/"         # npm 缓存
-      ".codeium/"     # AI 插件缓存
-      ".windsurf/"    # Windsurf 缓存
-      ".cursor/"      # Cursor 缓存
-      ".idea/"        # JetBrains 缓存
-      ".vscode/"      # VSCode 缓存
-      ".pki/"         # 证书数据库
-      ".dbus/"        # 系统总线
-      ".wget-hsts"    # wget 历史文件
-      "snap/"         # Ubuntu Snap 应用目录 (这个特别吵)
-      "Downloads/"    # 下载目录通常不放代码，建议忽略，除非你习惯在那写代码
-      "__pycache__/"  # Python 编译缓存
-      "*.bak"         # 备份文件
-      "*.tmp"         # 临时文件
+      # --- 系统垃圾 ---
+      ".cache/" ".local/" ".npm/" ".pki/" ".dbus/" ".wget-hsts" "snap/"
+      "__pycache__/" "*.bak" "*.tmp" "Downloads/"
       
-      # --- 针对性屏蔽 (根据你的截图) ---
-      ".config/Kiro/" # 你的截图里 Kiro 产生了大量垃圾
-      ".config/google-chrome/" # 浏览器缓存
-      ".config/opera/"         # 浏览器缓存
+      # --- 开发工具缓存 ---
+      ".codeium/" ".windsurf/" ".cursor/" ".idea/" ".vscode/"
+      ".cargo/" ".rustup/" 
+      
+      # --- 浏览器/软件配置 ---
+      ".config/Kiro/" ".config/google-chrome/" ".config/opera/"
     ];
   };
 
@@ -159,7 +134,27 @@
     enable = true;
   };
 
-  # 7. Fish Shell 配置
+  # 8. LF 文件管理器 (新增模块)
+  programs.lf = {
+    enable = true;
+    settings = {
+      hidden = true;      # 显示隐藏文件
+      drawbox = true;     # 显示边框
+      icons = true;       # 显示图标
+      ignorecase = true;  # 忽略大小写
+    };
+    
+    keybindings = {
+      # 基础操作: y=复制, d=剪切/移动, p=粘贴
+      # 🗑️ 新增：按 D 删除文件 (带确认)
+      D = "delete"; 
+      # 快捷操作
+      gh = "cd ~";       # gh 回首页
+      "." = "set hidden!"; # . 切换隐藏文件
+    };
+  };
+
+  # 9. Fish Shell 配置
   programs.fish = {
     enable = true;
     
@@ -170,6 +165,7 @@
       rm = "rm -i";
       zj = "zellij";
       lz = "lazygit";
+      lf = "lfcd"; # ⚡ 输入 lf 自动调用下面的 lfcd 函数
     };
 
     functions = {
@@ -188,18 +184,31 @@
           cd "$dir"
         end
       '';
+      
+      # ⚡ lfcd: 退出 lf 时自动跳转目录 (核心功能)
+      lfcd = ''
+        set tmp (mktemp)
+        ${pkgs.lf}/bin/lf -last-dir-path=$tmp $argv
+        if test -f "$tmp"
+            set dir (cat "$tmp")
+            rm -f "$tmp"
+            if test -d "$dir"
+                if test "$dir" != (pwd)
+                    cd "$dir"
+                end
+            end
+        end
+      '';
 
-      # frg: 全局搜索内容 (保持不变)
+      # frg: 全局搜索内容
       frg = ''
         if test (count $argv) -eq 0
           echo "Usage: frg <search_term>"
           return 1
         end
-        
         rg --line-number --no-heading --color=always --smart-case $argv | \
         fzf --ansi --delimiter : --preview 'bat --style=numbers --color=always --highlight-line {2} {1}' | \
         read -l result
-        
         if test -n "$result"
           set file (echo $result | cut -d: -f1)
           set line (echo $result | cut -d: -f2)
@@ -214,10 +223,8 @@
         eval (/home/linuxbrew/.linuxbrew/bin/brew shellenv)
       end
       
-      # 设置默认编辑器为 nvim (这样 fef/frg 就会调用 Homebrew 的 nvim)
+      # 设置默认编辑器
       set -gx EDITOR nvim
-      
-      # 注意：fastfetch 已移除，启动更清爽
     '';
   };
 
