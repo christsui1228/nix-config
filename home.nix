@@ -68,6 +68,17 @@
     };
   };
 
+  # Alacritty 配置：启动时自动附着或创建 Zellij 会话
+  programs.alacritty = {
+    enable = true;
+    settings = {
+      shell = {
+        program = "${pkgs.zellij}/bin/zellij";
+        args = [ "attach" "--create" ];
+      };
+    };
+  };
+
   # 5. FZF 模块 (配色已调整为 Solarized 风格)
   programs.fzf = {
     enable = true;
