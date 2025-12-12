@@ -65,6 +65,18 @@
       show_startup_tips = false;
       default_layout = "compact";
       default_shell = "fish"; # 强制新面板使用 Fish
+      keybinds = {
+        normal = {
+          # 1. 解绑 Ctrl+h/j/k/l (把控制权还给 Neovim)
+          "unbind \"Ctrl h\" \"Ctrl j\" \"Ctrl k\" \"Ctrl l\"" = [];
+
+          # 2. 绑定 Alt+h/j/k/l (用来切换 Zellij 面板)
+          "bind \"Alt h\"" = { MoveFocus = "Left"; };
+          "bind \"Alt l\"" = { MoveFocus = "Right"; };
+          "bind \"Alt j\"" = { MoveFocus = "Down"; };
+          "bind \"Alt k\"" = { MoveFocus = "Up"; };
+        };
+      };
     };
   };
 
