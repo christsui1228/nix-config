@@ -8,6 +8,9 @@
   # 1. 开启通用 Linux 支持
   targets.genericLinux.enable = true;
 
+  # ⚠️ 关键设置：让 Home Manager 管理字体，否则 Alacritty 找不到 Nerd Font
+  fonts.fontconfig.enable = true;
+
   # 2. 纯命令行工具包
   home.packages = with pkgs; [
     fastfetch
@@ -59,15 +62,19 @@
   # 4. 终端复用 Zellij
   programs.zellij = {
     enable = true;
-    enableFishIntegration = false;
+    enableFishIntegration = false; # 我们通过 Alacritty 启动参数或别名来调用
     settings = {
+      # ✅ 这里设置缓存行数为 10万
+      scroll_buffer_size = 100000;
+      
       theme = "solarized-dark";
       show_startup_tips = false;
       default_layout = "compact";
       default_shell = "fish"; # 强制新面板使用 Fish
+      
       keybinds = {
         normal = {
-          # 1. 解绑 Ctrl+h/j/k/l (把控制权还给 Neovim)
+          # 1. 解绑 Ctrl+h/j/k/l (把控制权还给 Neovim/Blink)
           "unbind \"Ctrl h\" \"Ctrl j\" \"Ctrl k\" \"Ctrl l\"" = [];
 
           # 2. 绑定 Alt+h/j/k/l (用来切换 Zellij 面板)
@@ -121,7 +128,7 @@
     enableFishIntegration = true;
   };
 
-  # 7. FD 黑名单 (解决搜出一堆乱七八糟文件的问题)
+  # 7. FD 黑名单
   programs.fd = {
     enable = true;
     hidden = true; 
@@ -146,7 +153,7 @@
     enable = true;
   };
 
-  # 8. LF 文件管理器 (新增模块)
+  # 8. LF 文件管理器
   programs.lf = {
     enable = true;
     settings = {
@@ -157,27 +164,75 @@
     };
     
     keybindings = {
-      # 基础操作: y=复制, d=剪切/移动, p=粘贴
-      # 🗑️ 新增：按 D 删除文件 (带确认)
+      # 基础操作
       D = "delete"; 
-      # 快捷操作
-      gh = "cd ~";       # gh 回首页
-      "." = "set hidden!"; # . 切换隐藏文件
+      gh = "cd ~";       
+      "." = "set hidden!";
     };
   };
 
-  # 9. Fish Shell 配置
+  # 9. Starship 提示符 (新增)
+  programs.starship = {
+    enable = true;
+    enableFishIntegration = true;
+    settings = {
+      add_newline = false;
+      # 可以在这里继续自定义，例如：
+      # character.success_symbol = "[➜](bold green)";
+    };
+  };
+
+  # 10. Alacritty 终端配置 (✅ 修复：使用 Nix 语法替代 TOML)
+  programs.alacritty = {
+    enable = true;
+    package = pkgs.runCommand "ignore-alacritty" {} "mkdir -p $out";
+    settings = {
+      general = {
+        # 注意：你需要确保这个配色文件存在，或者你可以直接在这里写 colors 配置
+        import = [ "~/.config/alacritty/solarized_dark.toml" ];
+      };
+      
+      terminal.shell = {
+        program = "fish";
+        # 启动时直接进入 Zellij
+        args = [ "-l" "-c" "zellij" ];
+      };
+
+      window = {
+        padding = { x = 1; y = 1; };
+        opacity = 0.98;
+        decorations = "Full";
+        dynamic_padding = true;
+      };
+
+      font = {
+        size = 19.0;
+        # ✅ 关键修复：指定 Nerd Font 家族名称，防止乱码
+        normal = {
+          family = "JetBrainsMono Nerd Font";
+          style = "Regular";
+        };
+        bold = {
+          family = "JetBrainsMono Nerd Font";
+          style = "Bold";
+        };
+      };
+    };
+  };
+
+  # 11. Fish Shell 配置
   programs.fish = {
     enable = true;
     
     shellAliases = {
-      ga = "git add";
-      gc = "git commit";
+      gst = "git status";
+      gaa = "git add --all";
+      gc = "git commit -m";
       gp = "git push";
       rm = "rm -i";
       zj = "zellij";
       lz = "lazygit";
-      lf = "lfcd"; # ⚡ 输入 lf 自动调用下面的 lfcd 函数
+      lf = "lfcd"; 
     };
 
     functions = {
@@ -197,7 +252,7 @@
         end
       '';
       
-      # ⚡ lfcd: 退出 lf 时自动跳转目录 (核心功能)
+      # lfcd: 退出 lf 时自动跳转目录
       lfcd = ''
         set tmp (mktemp)
         ${pkgs.lf}/bin/lf -last-dir-path=$tmp $argv
