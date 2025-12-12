@@ -176,12 +176,34 @@
     enable = true;
     enableFishIntegration = true;
     settings = {
+      # 1. 保持紧凑（命令之间不空行），但提示符本身依然是两行结构
       add_newline = false;
-      # 可以在这里继续自定义，例如：
-      # character.success_symbol = "[➜](bold green)";
+
+      # 2. 路径配置：显示完整路径
+      directory = {
+        truncation_length = 0;    # 0 = 永不缩写，显示全路径 ~/coding/sugars
+        truncate_to_repo = false; # 在 git 仓库里也不要缩写
+        style = "bold blue";
+      };
+
+      # 3. 彻底隐藏你不需要的版本号信息
+      package.disabled = true; # 隐藏 v0.1.0
+      python.disabled = true;  # 隐藏 via v3.12.3
+      nodejs.disabled = true;
+      rust.disabled = true;
+      golang.disabled = true;
+      
+      # 4. (可选) 如果你想显式确保两行模式，可以写上这一段，虽然默认就是开启的
+      line_break = {
+        disabled = false;
+      };
+
+      # 5. Git 分支依然保留，这很有用
+      git_branch = {
+        style = "bold purple";
+      };
     };
   };
-
   # 10. Alacritty 终端配置 (✅ 修复：使用 Nix 语法替代 TOML)
   programs.alacritty = {
     enable = true;
