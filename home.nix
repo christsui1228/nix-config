@@ -15,6 +15,7 @@
   home.packages = with pkgs; [
     fastfetch
     nerd-fonts.jetbrains-mono 
+    pgcli
     # 注意：不安装 neovim，继续使用 Homebrew 版以保留你的配置
   ];
 
