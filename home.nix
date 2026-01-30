@@ -14,6 +14,7 @@
   # 2. 纯命令行工具包
   home.packages = with pkgs; [
     fastfetch
+    btop
     nerd-fonts.jetbrains-mono 
     # 注意：不安装 neovim，继续使用 Homebrew 版以保留你的配置
   ];
