@@ -171,6 +171,18 @@
     };
   };
 
+  # Yazi 文件管理器
+  programs.yazi = {
+    enable = true;
+    enableFishIntegration = true;
+    settings = {
+      manager = {
+        show_hidden = true;
+        sort_by = "natural";
+      };
+    };
+  };
+
   # 9. Starship 提示符 (新增)
   programs.starship = {
     enable = true;
