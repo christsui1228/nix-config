@@ -14,8 +14,8 @@
   # 2. 纯命令行工具包
   home.packages = with pkgs; [
     fastfetch
-    btop
     nerd-fonts.jetbrains-mono 
+    superfile
     # 注意：不安装 neovim，继续使用 Homebrew 版以保留你的配置
   ];
 
@@ -172,18 +172,6 @@
     };
   };
 
-  # Yazi 文件管理器
-  programs.yazi = {
-    enable = true;
-    enableFishIntegration = true;
-    settings = {
-      manager = {
-        show_hidden = true;
-        sort_by = "natural";
-      };
-    };
-  };
-
   # 9. Starship 提示符 (新增)
   programs.starship = {
     enable = true;
@@ -241,7 +229,7 @@
       };
 
       font = {
-        size = 19.0;
+        size = 16.0;
         # ✅ 关键修复：指定 Nerd Font 家族名称，防止乱码
         normal = {
           family = "JetBrainsMono Nerd Font";
@@ -268,6 +256,7 @@
       zj = "zellij";
       lz = "lazygit";
       lf = "lfcd"; 
+      spf="superfile";
     };
 
     functions = {
@@ -328,6 +317,35 @@
       # 设置默认编辑器
       set -gx EDITOR nvim
     '';
+  };
+  # 12. 新增 Yazi 配置 (修复进入目录变 nvim 的问题)
+  programs.yazi = {
+    enable = true;
+    enableFishIntegration = true; # 自动处理退出跳转目录
+    settings = {
+      manager = {
+        show_hidden = true;
+        sort_by = "natural";
+      };
+      opener = {
+        edit = [
+          { run = ''nvim "$@"''; block = true; }
+        ];
+        play = [
+          { run = ''mpv "$@"''; orphan = true; for = "unix"; }
+        ];
+      };
+      open = {
+        rules = [
+          # 核心修复：强制文件夹使用内置的 enter 逻辑，而不允许使用 edit
+          { mime = "inode/directory"; use = [ "open" "reveal" ]; }
+          # 文本文件才使用 edit (nvim)
+          { mime = "text/*"; use = [ "edit" "open" "reveal" ]; }
+          # 视频/音频
+          { mime = "video/*"; use = [ "play" "reveal" ]; }
+        ];
+      };
+    };
   };
 
   programs.home-manager.enable = true;
