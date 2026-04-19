@@ -17,6 +17,8 @@
     nerd-fonts.jetbrains-mono 
     pgcli
     lazydocker
+    pnpm
+    fnm
   ];
 
   # 3. Git 模块
@@ -309,6 +311,9 @@
     };
 
     interactiveShellInit = ''
+      # fnm 初始化
+      fnm env --use-on-cd | source
+
       # 兼容 Homebrew (为了 Neovim)
       if test -d /home/linuxbrew/.linuxbrew/bin
         eval (/home/linuxbrew/.linuxbrew/bin/brew shellenv)
