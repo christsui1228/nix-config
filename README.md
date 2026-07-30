@@ -2,6 +2,13 @@
 
 Chris 的 Ubuntu WSL2 用户环境和工作站恢复配置。
 
+当前 bootstrap 只支持以下目标环境：
+
+- Ubuntu 24.04 WSL2
+- x86_64
+- 已启用 systemd
+- 用户名 `chris`，Home 目录 `/home/chris`
+
 当前仓库正在从单文件 Home Manager 配置迁移为分层结构：
 
 - Ubuntu/APT/systemd 管理系统软件、Docker、CUDA 和 NVIDIA。
@@ -50,17 +57,37 @@ CUDA、NVIDIA 或 TablePlus 等第三方 APT 源。备份保存在
 ./bootstrap.sh --profile wsl --preflight-only
 ```
 
-运行当前已开放的安全系统阶段：
+在纯净 WSL 中克隆仓库后，运行当前已实现的恢复阶段：
 
 ```bash
-./bootstrap.sh --profile wsl --china-mirror
+git clone https://github.com/christsui1228/nix-config.git ~/nix-config
+cd ~/nix-config
+./bootstrap.sh --profile wsl --china-mirror --skip-docker
 ```
 
-当前该命令只执行环境与网络检查、可选 APT 镜像配置和基础系统包安装。
-它会明确停在 Docker、Nix 安装和 Home Manager 自动激活之前。完整
-bootstrap 仍在实现中。
+顶层脚本必须由普通用户运行，禁止使用 `sudo ./bootstrap.sh`。脚本只在
+需要系统权限的阶段调用 `sudo`。
+
+当前恢复流程会依次：
+
+1. 检查 WSL、Ubuntu、架构、用户、systemd、DNS 和网络。
+2. 可选切换 Ubuntu APT 中国镜像并安装基础系统包。
+3. 已有 Nix 时验证并跳过安装；否则从 `https://nixos.org/nix/install`
+   下载官方 installer，以 multi-user daemon 模式安装且不添加 channel。
+4. 使用 `flake.lock` 构建 Home Manager generation。
+5. 只有构建成功后才更新 Home Manager profile 并激活；已有相同
+   generation 时不会创建重复 generation。
+6. 验证 Nix daemon、generation 和 `home-manager` 命令。
+
+Docker 和 Node CLI 自动恢复尚未接入，因此建议当前显式使用
+`--skip-docker`。首次安装流程仍需在一次性纯净 WSL 中完成端到端验证，
+目前不能视为正式切换完成。
 
 不要使用旧 `~/setup/install_docker.sh`，它包含删除 Docker 数据的操作。
+
+本仓库不会恢复 SSH 私钥、Token、密码、浏览器或 CLI 登录状态、Docker
+volume、数据库数据，以及 Windows Terminal、Windows 字体等宿主机内容。
+这些数据必须通过独立备份或密码管理器恢复。
 
 ## 日常更新与回滚
 

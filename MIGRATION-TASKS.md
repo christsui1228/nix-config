@@ -115,6 +115,7 @@ nix-config/
 - `~/setup/ubuntu-24.04-installation.sh` 有 executable bit 修改。
 - `~/.config/nvim/lazy-lock.json` 有未提交修改。
 - `~/.tmux/.tmux.conf` 有未提交修改。
+- `~/tmux-config/.tmux.conf.local` 有未提交的会话恢复配置。
 - `~/setup` 是独立 Git 仓库，迁移完成前不得删除。
 
 ### 4.3 当前高风险点
@@ -177,7 +178,8 @@ nix-config/
 - [x] 已安装的包通过 dpkg 状态检测跳过。
 - [x] 缺包时只使用非交互式 `apt-get update/install`。
 - [x] 安装后验证清单和关键命令。
-- [x] Docker、Nix 安装与 Home Manager 自动激活仍保持关闭。
+- [x] 该批次当时保持 Docker、Nix 安装与 Home Manager 自动激活关闭；
+  Nix/Home Manager 后续已在 4.9 接入。
 - [x] 当前 WSL 的只读 `--china-mirror --preflight-only` 验证通过。
 
 ### 4.8 Flake 全量更新结果
@@ -195,6 +197,24 @@ nix-config/
 - [x] 确认独立 `nix profile` 中的 `gh` 和 `mosh` 不属于本次
   Home Manager 更新，后续仍按 HM-002 迁移。
 
+### 4.9 bootstrap Nix/Home Manager 阶段实现结果
+
+- [x] 已有 Nix 时跳过 installer，并验证当前为 multi-user daemon 模式。
+- [x] 未安装 Nix 时只下载 `https://nixos.org/nix/install` 官方脚本，
+  使用 daemon 模式且不添加 channel。
+- [x] 对 `/nix` 或 `/etc/nix` 残留但无法加载命令的状态停止处理，不覆盖
+  可能损坏或未完成的安装。
+- [x] 所有 flake 命令显式启用 `nix-command flakes`，不依赖当前 shell。
+- [x] 直接构建锁定 flake 的 Home Manager activation package，不要求
+  纯净机器预先存在 `home-manager` 命令。
+- [x] build 成功并验证 generation 结构后才允许更新 profile 和激活。
+- [x] profile 已指向同一 generation 时不创建重复 generation。
+- [x] 新 generation 激活失败且存在旧 generation 时尝试自动恢复。
+- [x] postflight 验证 Nix daemon、Home Manager profile 和命令。
+- [x] 当前 WSL 的“检测已有 Nix并跳过安装 + 只构建、不激活”路径通过。
+- [ ] 官方 Nix installer 分支尚未在纯净 WSL 实际执行。
+- [ ] Home Manager 激活和完整 bootstrap 尚未在纯净 WSL 端到端执行。
+
 ## 5. 总体完成条件
 
 所有任务完成后应满足：
@@ -204,7 +224,7 @@ nix-config/
 - [ ] 普通用户软件不再通过临时 `nix profile install` 安装。
 - [ ] `bootstrap.sh` 可以重复运行。
 - [ ] 第二次运行 bootstrap 不产生破坏性变化。
-- [ ] bootstrap 不允许以 root 整体运行。
+- [x] bootstrap 不允许以 root 整体运行。
 - [ ] Docker 已有数据不会被删除。
 - [ ] Docker NVIDIA runtime 配置不会被覆盖。
 - [x] `nix flake check` 通过。
@@ -222,7 +242,8 @@ nix-config/
 - [x] 检查 `~/nix-config/home.nix` 的未提交内容。
 - [x] 将这些修改吸收到模块化结构并提交。
 - [ ] 检查 Neovim 的 `lazy-lock.json` 是否需要提交。
-- [ ] 检查 tmux 上游配置中的修改是否应该进入个人配置仓库。
+- [x] 检查 tmux 上游配置中的修改是否应该进入个人配置仓库；确认 vi-mode
+  设置已经存在于个人配置中。
 - [ ] 保留 `~/setup` 的两个 executable bit 修改，直到迁移时决定。
 
 验收条件：
@@ -306,12 +327,12 @@ system/inventory/
 
 ## REPO-003：创建根目录 README
 
-- [ ] 写明支持的平台和架构。
-- [ ] 写明首次安装命令。
+- [x] 写明支持的平台和架构。
+- [x] 写明首次安装命令。
 - [x] 写明日常更新命令。
 - [x] 写明回滚方法。
-- [ ] 写明哪些数据不会由仓库恢复。
-- [ ] 明确禁止使用 `sudo ./bootstrap.sh`。
+- [x] 写明哪些数据不会由仓库恢复。
+- [x] 明确禁止使用 `sudo ./bootstrap.sh`。
 
 ---
 
@@ -356,11 +377,11 @@ system/inventory/
 - [x] `configure_apt`
 - [x] `install_system_packages`
 - [ ] `install_docker`
-- [ ] `install_nix`
-- [ ] `build_home_manager`
-- [ ] `activate_home_manager`
+- [x] `install_nix`
+- [x] `build_home_manager`
+- [x] `activate_home_manager`
 - [ ] `restore_node_tools`
-- [ ] `postflight`
+- [x] `postflight`
 
 每个阶段必须：
 
@@ -375,8 +396,8 @@ system/inventory/
 - [x] 已存在配置先比较内容。
 - [x] 配置变化前创建带时间戳的备份。
 - [ ] 用户组已包含用户时不重复添加。
-- [ ] 已安装 Nix 时不重新运行安装器。
-- [ ] Home Manager 构建失败时不执行 switch。
+- [x] 已安装 Nix 时不重新运行安装器。
+- [x] Home Manager 构建失败时不执行 switch。
 
 验收条件：
 
@@ -532,12 +553,18 @@ apt-get purge docker-ce
 
 ## NIX-001：安装或检测 Nix
 
-- [ ] `command -v nix` 成功时跳过安装。
-- [ ] 记录选择官方 Nix installer 或其他 installer 的理由。
-- [ ] 不使用不明来源的安装脚本。
-- [ ] 安装后加载 `nix-daemon.sh`。
-- [ ] 验证当前普通用户可以访问 Nix daemon。
-- [ ] 验证 `nix --version`。
+- [x] `command -v nix` 成功时跳过安装。
+- [x] 记录选择官方 Nix installer 或其他 installer 的理由。
+- [x] 不使用不明来源的安装脚本。
+- [x] 安装后加载 `nix-daemon.sh`。
+- [x] 验证当前普通用户可以访问 Nix daemon。
+- [x] 验证 `nix --version`。
+
+选择 Nix 官方 installer 是因为 nix.dev 对启用 systemd 的 WSL 明确推荐
+multi-user daemon 安装。bootstrap 通过 HTTPS 下载官方入口，设置
+`NIX_INSTALLER_YES=1` 实现无人值守，并设置
+`NIX_INSTALLER_NO_CHANNEL_ADD=1`，因为本仓库只使用锁定的 flake input。
+该分支在一次性纯净 WSL 验证前仍不视为最终验收完成。
 
 ## NIX-002：统一 Nix 配置
 
