@@ -80,6 +80,9 @@ nix-config/
 ├── assets/
 │   └── alacritty/
 ├── system/
+│   ├── nix/
+│   │   ├── README.md
+│   │   └── normalize-shell-init.sh
 │   └── ubuntu/
 │       ├── bootstrap.sh
 │       ├── packages.txt
@@ -88,8 +91,10 @@ nix-config/
 │       ├── configure-docker-proxy.sh
 │       └── manual-apps.md
 ├── node-tools/
-│   ├── package.json
-│   └── package-lock.json
+│   ├── default-node-version
+│   ├── node-dist-mirror
+│   ├── restore-runtime.sh
+│   └── README.md
 ├── SOFTWARE-MANAGEMENT-PLAN.md
 ├── MIGRATION-TASKS.md
 └── README.md
@@ -127,8 +132,7 @@ nix-config/
 - 当前 `daemon.json` 包含 NVIDIA runtime 配置，不能被覆盖。
 - 旧 Home Manager 配置已备份为
   `~/.config/home-manager.backup-20260730`，暂时保留用于回退。
-- `/etc/bash.bashrc` 中存在两段重复 Nix 初始化。
-- `~/.bashrc` 和 Home Manager 同时追加 PATH。
+- 审计时发现的重复 Nix 初始化和 Bash PATH 已按 4.12 完成清理。
 
 ### 4.4 首个实施批次结果
 
@@ -239,6 +243,29 @@ nix-config/
 - [x] 验证 `gh` 2.96.0 和 `mosh` 1.4.0 均来自 Home Manager。
 - [x] 回归验证 Fish、FNM、Node `v22.22.2` 和中国镜像环境变量。
 - [ ] generation 8 回滚入口仍保留，但尚未实际执行回滚演练。
+
+### 4.12 Nix Shell 初始化统一结果
+
+- [x] 确认 `/etc/nix/nix.conf` 只有一处
+  `experimental-features = nix-command flakes`。
+- [x] 新增 `system/nix/normalize-shell-init.sh`，只接受标准 Nix 官方块，
+  遇到未知格式停止。
+- [x] `/etc/bash.bashrc`、`/etc/profile.d/nix.sh`、`/etc/bashrc` 和
+  `/etc/zshrc` 均从两个重复块规范为一个。
+- [x] 系统原文件备份到
+  `/var/backups/nix-config/nix-shell/20260730T225818Z/`。
+- [x] `~/.bashrc` 不再手工追加 Nix profile PATH；非登录 Bash 只幂等
+  补充 `~/.local/bin`，登录 Bash 继续使用 Ubuntu 默认 `.profile`。
+- [x] 用户范围补充修改备份到
+  `~/.local/state/nix-config/backups/nix-shell/20260730T230328Z/`。
+- [x] 第二次 `--check` 通过，未产生新的修改。
+- [x] 干净的登录 Bash、交互 Bash 都只有一份 Nix 和用户 PATH，并能找到
+  `nix`、`home-manager`。
+- [x] Fish 保留 Home Manager 中显式的 multi-user Nix daemon PATH；
+  隔离交互测试确认 PATH 无重复，并能找到 Nix、Home Manager 和 Node
+  `v22.22.2`。
+- [x] 激活 generation 11；删除隔离测试失败的中间 generation 10，
+  保留正常的 generation 9、8 回滚点。
 
 ## 5. 总体完成条件
 
@@ -403,6 +430,7 @@ system/inventory/
 - [x] `install_system_packages`
 - [ ] `install_docker`
 - [x] `install_nix`
+- [x] `normalize_nix_shell`
 - [x] `build_home_manager`
 - [x] `activate_home_manager`
 - [x] `restore_node_tools`
@@ -593,17 +621,19 @@ multi-user daemon 安装。bootstrap 通过 HTTPS 下载官方入口，设置
 
 ## NIX-002：统一 Nix 配置
 
-- [ ] 确保只存在一处有效的：
+- [x] 确保只存在一处有效的：
 
 ```text
 experimental-features = nix-command flakes
 ```
 
-- [ ] 清理 `/etc/bash.bashrc` 中重复的 Nix 初始化块。
-- [ ] 清理 `~/.bashrc` 中重复 PATH。
-- [ ] 保留 Bash 登录和恢复能力。
-- [ ] Fish 作为主要交互 Shell。
-- [ ] 确认 Bash 与 Fish 都能找到 Nix 和 Home Manager 软件。
+- [x] 清理 `/etc/bash.bashrc` 中重复的 Nix 初始化块。
+- [x] 同时清理 installer 写入 `/etc/profile.d/nix.sh`、`/etc/bashrc` 和
+  `/etc/zshrc` 的相同重复块。
+- [x] 清理 `~/.bashrc` 中重复 PATH。
+- [x] 保留 Bash 登录和恢复能力。
+- [x] Fish 作为主要交互 Shell。
+- [x] 确认 Bash 与 Fish 都能找到 Nix 和 Home Manager 软件。
 
 ## NIX-003：移除旧 channel
 
@@ -897,7 +927,7 @@ which -a git fish gh mosh nvim node npm pnpm
 - [x] `gh` 和 `mosh` 来自 Home Manager。
 - [x] 不存在 NVM 与 FNM 冲突。
 - [ ] 不存在多个 pnpm 来源竞争。
-- [ ] PATH 不包含重复的 Nix 初始化结果。
+- [x] PATH 不包含重复的 Nix 初始化结果。
 
 ## TEST-004：Docker 验证
 

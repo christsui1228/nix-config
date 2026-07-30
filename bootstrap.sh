@@ -7,6 +7,7 @@ readonly BOOTSTRAP_REPO_DIR
 readonly BOOTSTRAP_SUPPORTED_PROFILE="wsl"
 readonly BOOTSTRAP_APT_MIRROR_SCRIPT="${BOOTSTRAP_REPO_DIR}/system/ubuntu/configure-apt-mirror.sh"
 readonly BOOTSTRAP_SYSTEM_PACKAGES_SCRIPT="${BOOTSTRAP_REPO_DIR}/system/ubuntu/install-packages.sh"
+readonly BOOTSTRAP_NIX_SHELL_SCRIPT="${BOOTSTRAP_REPO_DIR}/system/nix/normalize-shell-init.sh"
 readonly BOOTSTRAP_NIX_INSTALLER_URL="https://nixos.org/nix/install"
 readonly BOOTSTRAP_NODE_RUNTIME_SCRIPT="${BOOTSTRAP_REPO_DIR}/node-tools/restore-runtime.sh"
 readonly BOOTSTRAP_NODE_VERSION_FILE="${BOOTSTRAP_REPO_DIR}/node-tools/default-node-version"
@@ -78,7 +79,7 @@ bootstrap_usage() {
 
 当前实施状态：
   已启用 preflight、可选 APT 中国镜像、系统基础包、Nix 和
-  Home Manager 阶段，并恢复声明的默认 Node runtime。
+  Shell 初始化规范、Home Manager 阶段，并恢复声明的默认 Node runtime。
   Docker 和版本锁定的 Node CLI 集合尚未接入。
 EOF
 }
@@ -175,6 +176,9 @@ bootstrap_check_repository() {
 
 	[[ -x "$BOOTSTRAP_SYSTEM_PACKAGES_SCRIPT" ]] ||
 		bootstrap_fail "系统包脚本不存在或不可执行：$BOOTSTRAP_SYSTEM_PACKAGES_SCRIPT"
+
+	[[ -x "$BOOTSTRAP_NIX_SHELL_SCRIPT" ]] ||
+		bootstrap_fail "Nix Shell 规范脚本不存在或不可执行：$BOOTSTRAP_NIX_SHELL_SCRIPT"
 
 	[[ -x "$BOOTSTRAP_NODE_RUNTIME_SCRIPT" ]] ||
 		bootstrap_fail "Node runtime 恢复脚本不存在或不可执行：$BOOTSTRAP_NODE_RUNTIME_SCRIPT"
@@ -367,6 +371,10 @@ bootstrap_install_nix() {
 	bootstrap_verify_nix
 }
 
+bootstrap_normalize_nix_shell() {
+	sudo "$BOOTSTRAP_NIX_SHELL_SCRIPT" --user "$USER"
+}
+
 bootstrap_build_home_manager() {
 	local build_output
 	local generation_link
@@ -534,6 +542,7 @@ bootstrap_main() {
 	bootstrap_run_stage "configure_apt" bootstrap_configure_apt
 	bootstrap_run_stage "install_system_packages" bootstrap_install_system_packages
 	bootstrap_run_stage "install_nix" bootstrap_install_nix
+	bootstrap_run_stage "normalize_nix_shell" bootstrap_normalize_nix_shell
 	bootstrap_run_stage "build_home_manager" bootstrap_build_home_manager
 	bootstrap_run_stage "activate_home_manager" bootstrap_activate_home_manager
 	bootstrap_run_stage "restore_node_tools" bootstrap_restore_node_tools

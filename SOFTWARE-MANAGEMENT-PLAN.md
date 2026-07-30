@@ -27,7 +27,7 @@
 - Nix 2.34.6
 - Home Manager 26.11-pre
 - 当前 Home Manager 配置可以正常求值和构建
-- 当前激活的是 Home Manager 第 9 代
+- 当前激活的是 Home Manager 第 11 代
 
 ### 2.2 已发现的软件来源
 
@@ -36,7 +36,7 @@
 | APT/dpkg | Docker、CUDA、NVIDIA、GUI、系统库 | 只保留系统级软件 |
 | Home Manager | Fish、Git、Zellij、Yazi、常用 CLI | 作为用户软件主要入口 |
 | 独立 `nix profile` | 只剩 Home Manager 管理入口 | 不再临时安装用户 CLI |
-| Nix channel | 旧 Home Manager master channel | flake 验证后移除 |
+| Nix channel | 旧 Home Manager master channel 已移除 | 只使用 flake |
 | npm/FNM | Claude、Codex、OpenCode、OpenClaw 等 | 用独立清单和 lockfile 管理 |
 | pipx/PDM | Copier、PDM | 暂时保留，之后评估迁入 Nix |
 | 手工安装 | Neovim、Kiro CLI、cpolar | 作为例外记录来源和版本 |
@@ -305,15 +305,23 @@ flake 构建和切换验证后已经移除。
 `gh` 和 `mosh` 已加入 Home Manager，并从独立 profile 精确移除。当前
 `nix profile list` 只剩 Home Manager 管理的 `home-manager-path`。
 
-### 6.4 PATH 和 Nix 初始化重复
+### 6.4 PATH 和 Nix 初始化重复（已处理）
 
-已发现：
+审计时发现：
 
 - `/etc/bash.bashrc` 中 Nix 初始化代码重复两遍。
-- `~/.bashrc` 又手工追加 `.local/bin`、`.nix-profile/bin` 和 Nix daemon profile。
-- Home Manager 同时设置了 `home.sessionPath`。
+- `/etc/profile.d/nix.sh`、`/etc/bashrc` 和 `/etc/zshrc` 也有相同重复。
+- `~/.bashrc` 又手工追加 `.local/bin`、`.nix-profile/bin` 和 Nix daemon
+  profile。
 
-应在确认 Bash 和 Fish 都可以加载 Home Manager 环境后，删除重复初始化，只保留一个入口。
+现在每个系统文件只保留一个标准 Nix 官方块，用户 `.bashrc` 不再手工
+添加 Nix PATH。登录 Bash 由 `/etc/profile.d/nix.sh` 初始化，交互式
+非登录 Bash 由 `/etc/bash.bashrc` 初始化。
+
+Fish 仍通过 Home Manager 的 `home.sessionPath` 显式加入 multi-user
+daemon 的 `/nix/var/nix/profiles/default/bin`。这是必要声明：Home Manager
+自动加载的用户级 `nix.sh` 不会加入 daemon profile；Fish 对 PATH 列表
+去重，因此不会造成重复。
 
 ### 6.5 Bash 与 Fish 边界不清晰
 
@@ -427,7 +435,7 @@ Neovim 0.11.5
 
 ### 阶段四：清理配置漂移
 
-1. 清理重复 PATH 和 Nix 初始化。
+1. 已清理重复 PATH 和 Nix 初始化，并加入 bootstrap 幂等规范阶段。
 2. 修复或移除 Alacritty 配置。
 3. 移除失效的 Superfile 别名。
 4. 决定是否安装 `mpv`。

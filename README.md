@@ -74,12 +74,20 @@ cd ~/nix-config
 2. 可选切换 Ubuntu APT 中国镜像并安装基础系统包。
 3. 已有 Nix 时验证并跳过安装；否则从 `https://nixos.org/nix/install`
    下载官方 installer，以 multi-user daemon 模式安装且不添加 channel。
-4. 使用 `flake.lock` 构建 Home Manager generation。
-5. 只有构建成功后才更新 Home Manager profile 并激活；已有相同
+4. 规范 Nix 官方 Shell 初始化块和 Bash PATH；未知格式会停止，修改前
+   备份到 `/var/backups/nix-config/`。
+5. 使用 `flake.lock` 构建 Home Manager generation。
+6. 只有构建成功后才更新 Home Manager profile 并激活；已有相同
    generation 时不会创建重复 generation。
-6. 按 `node-tools/default-node-version` 幂等恢复 FNM 默认 Node runtime；
+7. 按 `node-tools/default-node-version` 幂等恢复 FNM 默认 Node runtime；
    已安装目标版本时不会重复下载。
-7. 验证 Nix daemon、generation、`home-manager` 和默认 Node 版本。
+8. 验证 Nix daemon、generation、`home-manager` 和默认 Node 版本。
+
+Shell 初始化也可以独立检查：
+
+```bash
+./system/nix/normalize-shell-init.sh --check --user chris
+```
 
 默认 Node runtime 已接入；Docker 和版本锁定的 Node CLI 集合尚未接入，
 因此建议当前显式使用 `--skip-docker`。首次安装流程仍需在一次性纯净
