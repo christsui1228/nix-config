@@ -2,7 +2,7 @@
 
 > 创建日期：2026-07-30
 >
-> 当前状态：首个低风险实施批次完成，尚未激活新 generation
+> 当前状态：Home Manager 配置入口和 flake 来源已统一
 >
 > 目标环境：Ubuntu 24.04 LTS / WSL2 / `x86_64-linux` / 用户 `chris`
 
@@ -109,8 +109,8 @@ nix-config/
 
 ### 4.2 当前未提交或独立状态
 
-- 原 `~/nix-config/home.nix` 的未提交修改已原样吸收到模块化结构中，
-  但本批迁移整体尚未提交。
+- 原 `~/nix-config/home.nix` 的未提交修改已原样吸收到模块化结构，
+  并已随提交 `5737eae` 推送。
 - `~/setup/set_apt_mirror.sh` 有 executable bit 修改。
 - `~/setup/ubuntu-24.04-installation.sh` 有 executable bit 修改。
 - `~/.config/nvim/lazy-lock.json` 有未提交修改。
@@ -124,7 +124,8 @@ nix-config/
 - 当前 Docker 有 8 个容器、9 个镜像和约 4 GB volume。
 - `setup_docker_net.sh` 会覆盖整个 `/etc/docker/daemon.json`。
 - 当前 `daemon.json` 包含 NVIDIA runtime 配置，不能被覆盖。
-- 直接运行旧 `home-manager switch` 可能使用 `~/.config/home-manager/home.nix`。
+- 旧 Home Manager 配置已备份为
+  `~/.config/home-manager.backup-20260730`，暂时保留用于回退。
 - `/etc/bash.bashrc` 中存在两段重复 Nix 初始化。
 - `~/.bashrc` 和 Home Manager 同时追加 PATH。
 
@@ -141,23 +142,34 @@ nix-config/
 - [x] 创建包含 nixfmt、ShellCheck 和 shfmt 的仓库开发环境。
 - [x] 通过 ShellCheck、shfmt、nixfmt、`git diff --check` 和 flake check。
 
-因为新模块尚未加入 Git 索引，实施过程中使用 `path:.` 验证完整工作树。
-审查并提交本批文件后，普通 `nix flake check` 将直接使用 Git flake。
+本批已经作为提交 `5737eae` 推送，普通 `nix flake check` 已通过。
+
+### 4.5 Home Manager 来源统一结果
+
+- [x] 将旧 `~/.config/home-manager` 整体移动到
+  `~/.config/home-manager.backup-20260730`。
+- [x] 创建 `~/.config/home-manager -> ~/nix-config`。
+- [x] 显式 flake build 和 switch 成功。
+- [x] 从 `/tmp` 使用默认配置入口 build 成功。
+- [x] 移除旧 Home Manager channel。
+- [x] 移除 channel 后再次使用默认配置入口 build 成功。
+- [x] `home-manager-path`、`gh` 和 `mosh` 仍保持可用。
+- [x] 当前 generation 保持为已验证的 generation 5。
 
 ## 5. 总体完成条件
 
 所有任务完成后应满足：
 
-- [ ] 仓库只有一个 Home Manager 配置入口。
-- [ ] 不再依赖 Home Manager channel。
+- [x] 仓库只有一个 Home Manager 配置入口。
+- [x] 不再依赖 Home Manager channel。
 - [ ] 普通用户软件不再通过临时 `nix profile install` 安装。
 - [ ] `bootstrap.sh` 可以重复运行。
 - [ ] 第二次运行 bootstrap 不产生破坏性变化。
 - [ ] bootstrap 不允许以 root 整体运行。
 - [ ] Docker 已有数据不会被删除。
 - [ ] Docker NVIDIA runtime 配置不会被覆盖。
-- [ ] `nix flake check` 通过。
-- [ ] Home Manager activation package 构建通过。
+- [x] `nix flake check` 通过。
+- [x] Home Manager activation package 构建通过。
 - [ ] Home Manager 可以切换和回滚。
 - [ ] 纯净测试 WSL 可以完成一次完整恢复。
 - [ ] 系统层、用户层和项目层的软件来源有文档记录。
@@ -168,8 +180,8 @@ nix-config/
 
 ## SAFE-001：处理现有未提交修改
 
-- [ ] 检查 `~/nix-config/home.nix` 的未提交内容。
-- [ ] 决定提交、拆分提交或暂存这些修改。
+- [x] 检查 `~/nix-config/home.nix` 的未提交内容。
+- [x] 将这些修改吸收到模块化结构并提交。
 - [ ] 检查 Neovim 的 `lazy-lock.json` 是否需要提交。
 - [ ] 检查 tmux 上游配置中的修改是否应该进入个人配置仓库。
 - [ ] 保留 `~/setup` 的两个 executable bit 修改，直到迁移时决定。
@@ -503,10 +515,10 @@ experimental-features = nix-command flakes
 
 ## NIX-003：移除旧 channel
 
-- [ ] 确认 flake build 和 switch 连续成功。
-- [ ] 记录当前 channel。
-- [ ] 移除旧 Home Manager channel。
-- [ ] 确认后续命令不再依赖 `<home-manager>` 或 `<nixpkgs>`。
+- [x] 确认 flake build 和 switch 连续成功。
+- [x] 记录原 Home Manager master channel。
+- [x] 移除旧 Home Manager channel。
+- [x] 确认默认 flake build 不再依赖 `<home-manager>` 或 `<nixpkgs>`。
 
 验收条件：
 
@@ -518,11 +530,11 @@ nix-channel --list
 
 ## NIX-004：统一 Home Manager 配置入口
 
-- [ ] 备份 `~/.config/home-manager`。
-- [ ] 比较旧 `home.nix` 与仓库配置。
-- [ ] 确认旧配置没有需要迁移的唯一内容。
-- [ ] 将 `~/.config/home-manager` 指向 `~/nix-config`，或明确只使用 `--flake`。
-- [ ] 为日常 switch 设置固定命令或 `nh`。
+- [x] 备份 `~/.config/home-manager`。
+- [x] 比较旧 `home.nix` 与仓库配置。
+- [x] 确认旧配置没有需要迁移的唯一内容。
+- [x] 将 `~/.config/home-manager` 指向 `~/nix-config`。
+- [x] 验证显式和默认 Home Manager 配置入口。
 
 标准命令：
 

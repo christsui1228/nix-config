@@ -21,8 +21,17 @@ nix build .#homeConfigurations.chris.activationPackage --no-link
 激活配置：
 
 ```bash
+home-manager switch
+```
+
+`~/.config/home-manager` 已指向本仓库；需要显式指定时仍可使用：
+
+```bash
 home-manager switch --flake ~/nix-config#chris
 ```
+
+迁移前的旧配置保存在
+`~/.config/home-manager.backup-20260730`，确认后续迁移稳定前暂不删除。
 
 只运行新机初始化的环境检查：
 
