@@ -31,4 +31,7 @@ sudo ./system/ubuntu/install-packages.sh
 `apt-get install`；它永远不会执行 upgrade、autoremove、purge，或修改
 APT 的 manual/auto 标记。
 
+其中 `postgresql-client` 只提供 `psql`、`pg_dump` 和 `pg_restore`
+等客户端命令，供 Neovim Dadbod/DBUI 使用，不安装 PostgreSQL server。
+
 Docker 等其余系统安装脚本尚未开放。

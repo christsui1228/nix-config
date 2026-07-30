@@ -339,7 +339,16 @@ pg_dump   16.14
 pg_restore 16.14
 ```
 
-建议以后由 Home Manager 提供 PostgreSQL 18 客户端。迁移前必须验证现有备份脚本调用的是容器内工具还是宿主机工具。
+Neovim Dadbod/DBUI 的 PostgreSQL adapter 会直接调用 `psql`，不会调用
+`pgcli`。因此 Ubuntu 基础包清单声明客户端专用的
+`postgresql-client`；Ubuntu 24.04 当前提供 16.x 客户端，不安装或启动
+PostgreSQL server。`pgcli` 继续由 Home Manager 提供，作为独立的交互式
+客户端。
+
+`psql` 16 可以用于 DBUI 的常规连接，但不能据此假设备份工具也兼容
+PostgreSQL 18。迁移前必须确认备份脚本调用的是容器内 PostgreSQL 18
+工具还是宿主机工具；只有宿主机确实负责备份时，才考虑添加 PGDG 官方
+源的 `postgresql-client-18`。
 
 ### 6.9 Neovim 暂时不适合直接迁移
 

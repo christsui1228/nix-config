@@ -428,6 +428,7 @@ unzip
 xz-utils
 build-essential
 python3-venv
+postgresql-client
 ```
 
 任务：
@@ -601,7 +602,8 @@ home-manager switch --flake ~/nix-config#chris
 - [x] 迁移现有 `home.packages`。
 - [ ] 将 `gh` 加入 Home Manager。
 - [ ] 将 `mosh` 加入 Home Manager。
-- [ ] 评估加入 PostgreSQL 18 客户端。
+- [x] 决定不为 DBUI 安装完整 PostgreSQL 18 Nix 包，改由 APT
+  `postgresql-client` 提供 `psql`。
 - [ ] 评估加入 `mpv`。
 - [ ] 不加入 Docker daemon、CUDA 或系统 GUI。
 
@@ -731,11 +733,16 @@ home-manager switch --flake ~/nix-config#chris
 
 ## DB-001：数据库客户端版本
 
-- [ ] 确认宿主机 `psql/pg_dump/pg_restore` 的使用场景。
+- [x] 确认 Neovim Dadbod/DBUI 的 PostgreSQL adapter 依赖 `psql`，
+  `pgcli` 不能替代。
+- [x] 将客户端专用的 `postgresql-client` 加入 Ubuntu 基础包清单，
+  不安装 PostgreSQL server。
+- [ ] 确认宿主机 `pg_dump/pg_restore` 是否参与数据库备份。
 - [ ] 确认备份脚本实际调用的 PostgreSQL 客户端位置。
-- [ ] 测试 PostgreSQL 18 客户端连接现有容器。
+- [ ] 测试 APT `psql` 连接现有 PostgreSQL 18 容器。
 - [ ] 测试备份和恢复。
-- [ ] 验证后再决定是否移除 APT PostgreSQL 16 客户端。
+- [ ] 如果宿主机负责备份，再决定使用容器内 PostgreSQL 18 工具或添加
+  PGDG 的 `postgresql-client-18`。
 
 ## APP-001：Neovim
 

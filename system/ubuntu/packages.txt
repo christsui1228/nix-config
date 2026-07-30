@@ -8,3 +8,4 @@ unzip
 xz-utils
 build-essential
 python3-venv
+postgresql-client
