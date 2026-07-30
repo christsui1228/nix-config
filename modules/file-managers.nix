@@ -5,8 +5,11 @@
     enable = true;
     enableFishIntegration = true;
     defaultCommand = "fd --type f --strip-cwd-prefix --hidden --follow";
-    changeDirWidgetCommand = "fd --type d --strip-cwd-prefix --hidden --follow";
-    fileWidgetCommand = "fd --type f --strip-cwd-prefix --hidden --follow";
+    changeDirWidget.command = "fd --type d --strip-cwd-prefix --hidden --follow";
+    fileWidget.command = "fd --type f --strip-cwd-prefix --hidden --follow";
+
+    # Atuin 在 Fish 中继续负责 Ctrl-R；避免两个集成重复绑定。
+    historyWidget.fish.command = "";
 
     defaultOptions = [
       "--height 40%"
@@ -94,6 +97,7 @@
   programs.yazi = {
     enable = true;
     enableFishIntegration = true;
+    shellWrapperName = "yy";
     settings = {
       manager = {
         show_hidden = true;

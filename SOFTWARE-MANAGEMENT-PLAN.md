@@ -25,9 +25,9 @@
 - Ubuntu 24.04.4 LTS
 - WSL2，已启用 systemd
 - Nix 2.34.6
-- Home Manager 26.05-pre
+- Home Manager 26.11-pre
 - 当前 Home Manager 配置可以正常求值和构建
-- 当前激活的是 Home Manager 第 6 代
+- 当前激活的是 Home Manager 第 7 代
 
 ### 2.2 已发现的软件来源
 

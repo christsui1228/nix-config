@@ -180,6 +180,21 @@ nix-config/
 - [x] Docker、Nix 安装与 Home Manager 自动激活仍保持关闭。
 - [x] 当前 WSL 的只读 `--china-mirror --preflight-only` 验证通过。
 
+### 4.8 Flake 全量更新结果
+
+- [x] 更新前记录 generation 6 和关键命令版本。
+- [x] nixpkgs 从 2026-01-23 更新到 2026-07-29。
+- [x] Home Manager 从 2026-01-27 更新到 2026-07-29。
+- [x] Zellij 从 0.43.1 更新到 0.44.3。
+- [x] 将 fzf 的旧选项迁移到新选项名称。
+- [x] 显式保留 Atuin 对 Fish `Ctrl-R` 的控制。
+- [x] 显式保留 Yazi 的 `yy` shell wrapper。
+- [x] 87 项 flake check 和 activation package 构建通过。
+- [x] 激活 generation 7。
+- [x] Zellij 配置、Fish 启动和中国大陆镜像回归检查通过。
+- [x] 确认独立 `nix profile` 中的 `gh` 和 `mosh` 不属于本次
+  Home Manager 更新，后续仍按 HM-002 迁移。
+
 ## 5. 总体完成条件
 
 所有任务完成后应满足：
@@ -293,8 +308,8 @@ system/inventory/
 
 - [ ] 写明支持的平台和架构。
 - [ ] 写明首次安装命令。
-- [ ] 写明日常更新命令。
-- [ ] 写明回滚方法。
+- [x] 写明日常更新命令。
+- [x] 写明回滚方法。
 - [ ] 写明哪些数据不会由仓库恢复。
 - [ ] 明确禁止使用 `sudo ./bootstrap.sh`。
 
@@ -855,10 +870,10 @@ home-manager build --flake .#chris
 home-manager switch --flake .#chris
 ```
 
-- [ ] 更新前记录当前 generation。
-- [ ] 更新后检查主要命令。
-- [ ] 将 `flake.lock` 和配置变更一起提交。
-- [ ] 不启用无人值守的自动 flake 更新。
+- [x] 更新前记录当前 generation。
+- [x] 更新后检查主要命令。
+- [x] 将 `flake.lock` 和配置变更一起提交。
+- [x] 不启用无人值守的自动 flake 更新。
 
 ---
 

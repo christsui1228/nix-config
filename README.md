@@ -62,6 +62,27 @@ bootstrap 仍在实现中。
 
 不要使用旧 `~/setup/install_docker.sh`，它包含删除 Docker 数据的操作。
 
+## 日常更新与回滚
+
+更新前先记录当前 generation，再更新锁文件、构建和激活：
+
+```bash
+home-manager generations
+nix flake update
+nix flake check
+nix build .#homeConfigurations.chris.activationPackage --no-link
+home-manager switch --flake .#chris
+```
+
+激活后验证主要命令；如果出现问题，可以立即回到上一个 generation：
+
+```bash
+home-manager switch --rollback
+```
+
+确认更新稳定后，将 `flake.lock` 和必要的兼容配置一起提交。当前不启用
+无人值守的自动 flake 更新。
+
 ## 文档
 
 - [软件管理方案](./SOFTWARE-MANAGEMENT-PLAN.md)
