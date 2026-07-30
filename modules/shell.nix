@@ -67,7 +67,7 @@
 
     interactiveShellInit = ''
       # fnm 初始化
-      fnm env --use-on-cd | source
+      fnm env --use-on-cd --shell fish | source
 
       # 兼容 Homebrew (为了 Neovim)
       if test -d /home/linuxbrew/.linuxbrew/bin

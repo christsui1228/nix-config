@@ -215,6 +215,19 @@ nix-config/
 - [ ] 官方 Nix installer 分支尚未在纯净 WSL 实际执行。
 - [ ] Home Manager 激活和完整 bootstrap 尚未在纯净 WSL 端到端执行。
 
+### 4.10 默认 Node runtime 恢复结果
+
+- [x] `node-tools/default-node-version` 精确声明 Node `22.22.2`。
+- [x] `node-tools/node-dist-mirror` 声明清华大学 Node.js 二进制镜像。
+- [x] Home Manager 将同一镜像声明为 `FNM_NODE_DIST_MIRROR`。
+- [x] Fish 使用 `fnm env --use-on-cd --shell fish`，支持项目目录自动切换。
+- [x] `restore-runtime.sh` 幂等安装目标版本、设置 FNM default 并验证。
+- [x] 当前 WSL 连续执行两次 runtime 恢复脚本，第二次没有重新下载。
+- [x] 激活 Home Manager generation 8，并在干净 Fish 环境验证镜像、
+  Node `v22.22.2` 和 FNM default。
+- [x] bootstrap 的 `restore_node_tools` 与 Node postflight 路径通过。
+- [ ] 全新机器首次下载 Node 的分支尚未在一次性纯净 WSL 验证。
+
 ## 5. 总体完成条件
 
 所有任务完成后应满足：
@@ -229,7 +242,7 @@ nix-config/
 - [ ] Docker NVIDIA runtime 配置不会被覆盖。
 - [x] `nix flake check` 通过。
 - [x] Home Manager activation package 构建通过。
-- [ ] Home Manager 可以切换和回滚。
+- [ ] Home Manager 可以切换和回滚；当前已验证切换，尚未验证回滚。
 - [ ] 纯净测试 WSL 可以完成一次完整恢复。
 - [ ] 系统层、用户层和项目层的软件来源有文档记录。
 
@@ -380,7 +393,7 @@ system/inventory/
 - [x] `install_nix`
 - [x] `build_home_manager`
 - [x] `activate_home_manager`
-- [ ] `restore_node_tools`
+- [x] `restore_node_tools`
 - [x] `postflight`
 
 每个阶段必须：
@@ -721,10 +734,14 @@ server；在执行 `tmux kill-server` 前必须先保存会话并确认运行中
 
 ## NODE-001：退役 NVM 安装脚本
 
-- [ ] 停止调用 `~/setup/npm_install.sh`。
-- [ ] 不再安装 NVM。
-- [ ] FNM 作为唯一全局 Node 版本管理器。
-- [ ] 不再通过该脚本全局安装 pnpm。
+- [x] 停止调用 `~/setup/npm_install.sh`。
+- [x] 不再安装 NVM。
+- [x] FNM 作为唯一全局 Node 版本管理器。
+- [x] 不再通过该脚本全局安装 pnpm。
+
+当前仓库没有调用旧脚本，也没有 NVM 初始化；当前用户目录不存在
+`~/.nvm`，Bash 和 Fish 中均没有 `nvm` 命令。FNM 与 pnpm 由 Home
+Manager 提供。
 
 ## NODE-002：建立 Node CLI 清单
 
@@ -764,7 +781,7 @@ server；在执行 `tmux kill-server` 前必须先保存会话并确认运行中
 普通项目：
 
 - [ ] 使用 `.node-version`。
-- [ ] 使用 FNM 自动切换。
+- [x] 使用 FNM 自动切换。
 - [ ] 提交 `packageManager` 字段。
 - [ ] 提交 npm/pnpm lockfile。
 
@@ -852,7 +869,7 @@ home-manager build --flake .#chris
 - [x] `nix flake check path:.` 通过。
 - [x] activation package 构建通过。
 - [x] Home Manager 配置构建通过。
-- [ ] switch 后 Fish 可以启动。
+- [x] switch 后 Fish 可以启动。
 - [ ] generation 可以回滚。
 
 ## TEST-003：命令来源检查
@@ -865,7 +882,7 @@ which -a git fish gh mosh nvim node npm pnpm
 
 - [ ] 每个主要命令都有预期来源。
 - [ ] `gh` 和 `mosh` 来自 Home Manager。
-- [ ] 不存在 NVM 与 FNM 冲突。
+- [x] 不存在 NVM 与 FNM 冲突。
 - [ ] 不存在多个 pnpm 来源竞争。
 - [ ] PATH 不包含重复的 Nix 初始化结果。
 
@@ -915,7 +932,7 @@ which -a git fish gh mosh nvim node npm pnpm
 - [ ] 系统层功能全部迁移。
 - [ ] Docker 安装和代理配置已在测试 WSL 验证。
 - [x] APT HTTPS 镜像配置已在当前 WSL 通过 `apt-get update` 验证。
-- [ ] Node NVM 脚本已经完全不再使用。
+- [x] Node NVM 脚本已经完全不再使用。
 - [ ] Git 历史或必要内容已经保留。
 
 归档不等于立即删除本地目录。

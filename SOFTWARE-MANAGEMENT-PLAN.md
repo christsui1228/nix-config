@@ -27,7 +27,7 @@
 - Nix 2.34.6
 - Home Manager 26.11-pre
 - 当前 Home Manager 配置可以正常求值和构建
-- 当前激活的是 Home Manager 第 7 代
+- 当前激活的是 Home Manager 第 8 代
 
 ### 2.2 已发现的软件来源
 
@@ -96,7 +96,23 @@ nix profile install nixpkgs#<package>
 
 Home Manager 只提供通用工具和版本管理器，不负责每个项目的依赖集合。
 
-### 3.4 快速更新的 Node CLI
+### 3.4 默认 Node runtime
+
+仓库通过以下三个文件恢复通用的默认 Node 环境：
+
+- `node-tools/default-node-version`：精确声明默认 Node `22.22.2`。
+- `node-tools/node-dist-mirror`：声明 FNM 使用的清华大学下载镜像。
+- `node-tools/restore-runtime.sh`：安装声明版本、设置 FNM default 并验证。
+
+Home Manager 提供 FNM 和 pnpm，并在 Fish 中启用按目录自动切换。默认
+runtime 只是没有项目声明时的后备值：普通项目可提交 `.node-version` 或
+`.nvmrc` 选择另一个 Node 版本；高可复现项目则在自己的 devShell 中声明
+Node，同一项目不同时使用两套方式管理 runtime。
+
+因此，同一台机器可以通过 FNM 安装多个 Node 版本，各项目独立选择，不需要
+把所有项目固定到全局默认版本。
+
+### 3.5 快速更新的 Node CLI
 
 当前 npm 全局环境中包含：
 
@@ -119,7 +135,7 @@ node-tools/
 
 当前还有一些没有命令入口的全局 npm 包，例如 Slack、Lark、Google Auth、Nostr 等 SDK。迁移前应确认它们是否为 OpenClaw 或其他工具的运行依赖，不要直接删除。
 
-### 3.5 手工安装例外
+### 3.6 手工安装例外
 
 当前主要例外包括：
 
@@ -136,7 +152,7 @@ node-tools/
 3. 在本仓库记录安装地址、版本检查方式和升级步骤。
 4. 不允许出现“只记得装过，但不知道从哪里装的”软件。
 
-### 3.6 中国大陆镜像
+### 3.7 中国大陆镜像
 
 镜像配置也按管理边界拆分：
 
@@ -144,6 +160,8 @@ node-tools/
   使用阿里云 HTTPS 镜像；Docker、CUDA、NVIDIA 和 TablePlus 等第三方
   APT 源保持各自官方地址。
 - npm 和 pnpm 共用 Home Manager 声明的 `~/.npmrc`，使用 npmmirror。
+- FNM 使用 `node-tools/node-dist-mirror` 声明的清华大学 Node.js 二进制
+  镜像；Home Manager 和 runtime 恢复脚本读取同一个地址。
 - pip 和 pipx 共用 `~/.config/pip/pip.conf`，PDM 使用自己的
   `~/.config/pdm/config.toml`；两者都指向清华大学 PyPI 镜像。
 

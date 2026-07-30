@@ -8,6 +8,8 @@ readonly BOOTSTRAP_SUPPORTED_PROFILE="wsl"
 readonly BOOTSTRAP_APT_MIRROR_SCRIPT="${BOOTSTRAP_REPO_DIR}/system/ubuntu/configure-apt-mirror.sh"
 readonly BOOTSTRAP_SYSTEM_PACKAGES_SCRIPT="${BOOTSTRAP_REPO_DIR}/system/ubuntu/install-packages.sh"
 readonly BOOTSTRAP_NIX_INSTALLER_URL="https://nixos.org/nix/install"
+readonly BOOTSTRAP_NODE_RUNTIME_SCRIPT="${BOOTSTRAP_REPO_DIR}/node-tools/restore-runtime.sh"
+readonly BOOTSTRAP_NODE_VERSION_FILE="${BOOTSTRAP_REPO_DIR}/node-tools/default-node-version"
 
 bootstrap_profile="wsl"
 bootstrap_use_china_mirror=false
@@ -76,8 +78,8 @@ bootstrap_usage() {
 
 当前实施状态：
   已启用 preflight、可选 APT 中国镜像、系统基础包、Nix 和
-  Home Manager 阶段。
-  Docker 和 Node CLI 自动恢复尚未接入。
+  Home Manager 阶段，并恢复声明的默认 Node runtime。
+  Docker 和版本锁定的 Node CLI 集合尚未接入。
 EOF
 }
 
@@ -173,6 +175,12 @@ bootstrap_check_repository() {
 
 	[[ -x "$BOOTSTRAP_SYSTEM_PACKAGES_SCRIPT" ]] ||
 		bootstrap_fail "系统包脚本不存在或不可执行：$BOOTSTRAP_SYSTEM_PACKAGES_SCRIPT"
+
+	[[ -x "$BOOTSTRAP_NODE_RUNTIME_SCRIPT" ]] ||
+		bootstrap_fail "Node runtime 恢复脚本不存在或不可执行：$BOOTSTRAP_NODE_RUNTIME_SCRIPT"
+
+	[[ -r "$BOOTSTRAP_NODE_VERSION_FILE" ]] ||
+		bootstrap_fail "Node 版本清单不存在或不可读：$BOOTSTRAP_NODE_VERSION_FILE"
 }
 
 bootstrap_check_network() {
@@ -456,12 +464,29 @@ bootstrap_activate_home_manager() {
 	bootstrap_fail "Home Manager 激活失败。"
 }
 
+bootstrap_restore_node_tools() {
+	local fnm_bin
+
+	[[ -n "$bootstrap_home_manager_activation" ]] ||
+		bootstrap_fail "尚未构建 Home Manager，拒绝恢复 Node runtime。"
+
+	fnm_bin="$bootstrap_home_manager_activation/home-path/bin/fnm"
+	[[ -x "$fnm_bin" ]] ||
+		bootstrap_fail "Home Manager generation 中找不到 fnm。"
+
+	FNM_BIN="$fnm_bin" "$BOOTSTRAP_NODE_RUNTIME_SCRIPT"
+}
+
 bootstrap_postflight() {
+	local actual_node_version
+	local declared_node_version
+	local fnm_bin
 	local home_manager_bin
 	local profile
 
 	profile="${XDG_STATE_HOME:-$HOME/.local/state}/nix/profiles/home-manager"
 	home_manager_bin="$bootstrap_home_manager_activation/home-path/bin/home-manager"
+	fnm_bin="$bootstrap_home_manager_activation/home-path/bin/fnm"
 
 	bootstrap_verify_nix
 
@@ -472,14 +497,25 @@ bootstrap_postflight() {
 		bootstrap_fail "激活后的用户环境中找不到 home-manager。"
 
 	"$home_manager_bin" --version
+
+	IFS= read -r declared_node_version <"$BOOTSTRAP_NODE_VERSION_FILE"
+	actual_node_version="$(
+		"$fnm_bin" exec --using "$declared_node_version" node --version
+	)"
+	[[ "$actual_node_version" == "v$declared_node_version" ]] ||
+		bootstrap_fail \
+			"postflight Node 版本不匹配：期望 v$declared_node_version，实际 $actual_node_version"
+
 	printf '  Home Manager profile 验证完成。\n'
+	printf '  默认 Node runtime 验证完成：%s\n' "$actual_node_version"
 }
 
 bootstrap_report_partial_completion() {
 	if [[ "$bootstrap_skip_docker" == true ]]; then
-		bootstrap_warn "已按 --skip-docker 跳过 Docker；Node CLI 自动恢复尚未接入。"
+		bootstrap_warn \
+			"已按 --skip-docker 跳过 Docker；版本锁定的 Node CLI 集合尚未接入。"
 	else
-		bootstrap_warn "Docker 和 Node CLI 自动恢复尚未接入 bootstrap。"
+		bootstrap_warn "Docker 和版本锁定的 Node CLI 集合尚未接入 bootstrap。"
 	fi
 }
 
@@ -500,6 +536,7 @@ bootstrap_main() {
 	bootstrap_run_stage "install_nix" bootstrap_install_nix
 	bootstrap_run_stage "build_home_manager" bootstrap_build_home_manager
 	bootstrap_run_stage "activate_home_manager" bootstrap_activate_home_manager
+	bootstrap_run_stage "restore_node_tools" bootstrap_restore_node_tools
 	bootstrap_run_stage "postflight" bootstrap_postflight
 	bootstrap_report_partial_completion
 }

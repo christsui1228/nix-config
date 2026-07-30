@@ -77,11 +77,23 @@ cd ~/nix-config
 4. 使用 `flake.lock` 构建 Home Manager generation。
 5. 只有构建成功后才更新 Home Manager profile 并激活；已有相同
    generation 时不会创建重复 generation。
-6. 验证 Nix daemon、generation 和 `home-manager` 命令。
+6. 按 `node-tools/default-node-version` 幂等恢复 FNM 默认 Node runtime；
+   已安装目标版本时不会重复下载。
+7. 验证 Nix daemon、generation、`home-manager` 和默认 Node 版本。
 
-Docker 和 Node CLI 自动恢复尚未接入，因此建议当前显式使用
-`--skip-docker`。首次安装流程仍需在一次性纯净 WSL 中完成端到端验证，
-目前不能视为正式切换完成。
+默认 Node runtime 已接入；Docker 和版本锁定的 Node CLI 集合尚未接入，
+因此建议当前显式使用 `--skip-docker`。首次安装流程仍需在一次性纯净
+WSL 中完成端到端验证，目前不能视为正式切换完成。
+
+默认 Node 版本也可以独立恢复：
+
+```bash
+./node-tools/restore-runtime.sh
+```
+
+项目自己的 `.node-version`、`.nvmrc` 或 Nix devShell 可以覆盖这个全局
+默认版本。Home Manager 激活镜像环境变量后，应重新打开顶层终端，使已有
+父进程也继承新环境。
 
 不要使用旧 `~/setup/install_docker.sh`，它包含删除 Docker 数据的操作。
 
