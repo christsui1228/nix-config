@@ -38,7 +38,8 @@ sudo ./system/ubuntu/configure-apt-mirror.sh
 ```
 
 该脚本会备份并只修改 Ubuntu 官方 `ubuntu.sources`，不会修改 Docker、
-CUDA、NVIDIA 或 TablePlus 等第三方 APT 源。
+CUDA、NVIDIA 或 TablePlus 等第三方 APT 源。备份保存在
+`/var/backups/nix-config/apt/`，不会放进 APT 的源扫描目录。
 
 迁移前的旧配置保存在
 `~/.config/home-manager.backup-20260730`，确认后续迁移稳定前暂不删除。

@@ -162,11 +162,12 @@ nix-config/
 - [x] npm 和 pnpm 使用 `https://registry.npmmirror.com/`。
 - [x] pip、pipx 和 PDM 使用清华大学 PyPI 镜像。
 - [x] 用户级镜像配置由 Home Manager 声明。
-- [x] 当前 Ubuntu APT 已使用阿里云镜像，但还是 HTTP。
+- [x] Ubuntu APT 已从阿里云 HTTP 升级为 HTTPS。
 - [x] APT 脚本只管理 `ubuntu.sources`，不修改任何第三方源。
 - [x] 在切换前验证三个镜像端点可访问。
-- [ ] 在交互终端运行 APT 脚本，将 Ubuntu 源升级为 HTTPS 并完成
-  `apt-get update` 验证。
+- [x] 当前 WSL 已通过 `apt-get update` 验证。
+- [x] 后续备份保存在 `/var/backups/nix-config/apt/`，不污染 APT
+  源扫描目录。
 
 ## 5. 总体完成条件
 
@@ -825,7 +826,7 @@ which -a git fish gh mosh nvim node npm pnpm
 
 - [ ] 系统层功能全部迁移。
 - [ ] Docker 安装和代理配置已在测试 WSL 验证。
-- [ ] APT HTTPS 镜像配置已在当前 WSL 通过 `apt-get update` 验证。
+- [x] APT HTTPS 镜像配置已在当前 WSL 通过 `apt-get update` 验证。
 - [ ] Node NVM 脚本已经完全不再使用。
 - [ ] Git 历史或必要内容已经保留。
 

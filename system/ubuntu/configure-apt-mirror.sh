@@ -6,6 +6,7 @@ APT_MIRROR_SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly APT_MIRROR_SCRIPT_DIR
 readonly APT_MIRROR_SOURCE="${APT_MIRROR_SCRIPT_DIR}/ubuntu.sources.aliyun"
 readonly APT_MIRROR_TARGET="/etc/apt/sources.list.d/ubuntu.sources"
+readonly APT_MIRROR_BACKUP_DIR="/var/backups/nix-config/apt"
 
 apt_mirror_temp_file=""
 
@@ -90,10 +91,11 @@ apt_mirror_main() {
 	fi
 
 	timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
-	backup_file="${APT_MIRROR_TARGET}.backup-${timestamp}"
+	backup_file="${APT_MIRROR_BACKUP_DIR}/ubuntu.sources.${timestamp}"
 
 	apt_mirror_log "备份当前 Ubuntu 软件源"
-	cp --archive -- "$APT_MIRROR_TARGET" "$backup_file"
+	install -o root -g root -m 0755 -d -- "$APT_MIRROR_BACKUP_DIR"
+	install -o root -g root -m 0644 -- "$APT_MIRROR_TARGET" "$backup_file"
 	printf '  %s\n' "$backup_file"
 
 	apt_mirror_temp_file="$(mktemp "${APT_MIRROR_TARGET}.tmp.XXXXXX")"
