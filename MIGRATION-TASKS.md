@@ -169,6 +169,17 @@ nix-config/
 - [x] 后续备份保存在 `/var/backups/nix-config/apt/`，不污染 APT
   源扫描目录。
 
+### 4.7 Bootstrap 安全系统阶段
+
+- [x] preflight 检查 DNS 和所选 Ubuntu 镜像的 HTTPS 连通性。
+- [x] `--china-mirror` 只控制 Ubuntu APT 镜像阶段。
+- [x] 基础包安装器忽略空行和注释，并验证包名。
+- [x] 已安装的包通过 dpkg 状态检测跳过。
+- [x] 缺包时只使用非交互式 `apt-get update/install`。
+- [x] 安装后验证清单和关键命令。
+- [x] Docker、Nix 安装与 Home Manager 自动激活仍保持关闭。
+- [x] 当前 WSL 的只读 `--china-mirror --preflight-only` 验证通过。
+
 ## 5. 总体完成条件
 
 所有任务完成后应满足：
@@ -318,7 +329,7 @@ system/inventory/
 - [x] 检测当前用户名是否为 `chris`。
 - [x] 检测 Home 目录是否为 `/home/chris`。
 - [x] 检测 systemd 是否可用。
-- [ ] 检测网络和 DNS 是否基本可用。
+- [x] 检测网络和 DNS 是否基本可用。
 
 验收条件：
 
@@ -326,9 +337,9 @@ system/inventory/
 
 ## BOOT-003：实现阶段化执行
 
-- [ ] `preflight`
-- [ ] `configure_apt`
-- [ ] `install_system_packages`
+- [x] `preflight`
+- [x] `configure_apt`
+- [x] `install_system_packages`
 - [ ] `install_docker`
 - [ ] `install_nix`
 - [ ] `build_home_manager`
@@ -344,10 +355,10 @@ system/inventory/
 
 ## BOOT-004：实现幂等性
 
-- [ ] 已配置的软件源不重复添加。
-- [ ] 已安装软件不先卸载再安装。
-- [ ] 已存在配置先比较内容。
-- [ ] 配置变化前创建带时间戳的备份。
+- [x] 已配置的软件源不重复添加。
+- [x] 已安装软件不先卸载再安装。
+- [x] 已存在配置先比较内容。
+- [x] 配置变化前创建带时间戳的备份。
 - [ ] 用户组已包含用户时不重复添加。
 - [ ] 已安装 Nix 时不重新运行安装器。
 - [ ] Home Manager 构建失败时不执行 switch。
@@ -377,7 +388,7 @@ system/inventory/
 - [x] 保留 `Signed-By`。
 - [x] 执行 `apt-get update` 验证。
 - [x] 失败时自动恢复备份。
-- [ ] 只有传入 `--china-mirror` 时才执行。
+- [x] 只有传入 `--china-mirror` 时才执行。
 
 禁止：
 
@@ -407,15 +418,15 @@ python3-venv
 任务：
 
 - [x] 将包名放入 `system/ubuntu/packages.txt`。
-- [ ] 安装器忽略空行和注释。
-- [ ] 使用 `apt-get` 而不是交互式 `apt`。
-- [ ] 安装后检查关键命令。
+- [x] 安装器忽略空行和注释。
+- [x] 使用 `apt-get` 而不是交互式 `apt`。
+- [x] 安装后检查关键命令。
 
 ## APT-003：记录而不是盲目清理
 
-- [ ] 不自动执行 `apt autoremove`。
-- [ ] 不自动修改 apt manual/auto 标记。
-- [ ] 不批量删除当前 1004 个 dpkg 包。
+- [x] 不自动执行 `apt autoremove`。
+- [x] 不自动修改 apt manual/auto 标记。
+- [x] 不批量删除当前 1004 个 dpkg 包。
 - [ ] 后续单独审查 77 个 manual packages。
 
 ---

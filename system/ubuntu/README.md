@@ -20,4 +20,15 @@ sudo ./system/ubuntu/configure-apt-mirror.sh
 验证；验证失败时自动恢复。Docker、CUDA、NVIDIA 和 TablePlus 等
 第三方源不会被修改。
 
-其余系统安装脚本尚未开放。
+基础系统包也可以独立安装：
+
+```bash
+sudo ./system/ubuntu/install-packages.sh
+```
+
+安装器从 `packages.txt` 读取包名，忽略注释和空行，只安装 dpkg 尚未标记
+为 installed 的包。没有缺包时不会运行 `apt-get update` 或
+`apt-get install`；它永远不会执行 upgrade、autoremove、purge，或修改
+APT 的 manual/auto 标记。
+
+Docker 等其余系统安装脚本尚未开放。

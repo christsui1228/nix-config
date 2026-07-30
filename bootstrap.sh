@@ -5,11 +5,14 @@ set -Eeuo pipefail
 BOOTSTRAP_REPO_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly BOOTSTRAP_REPO_DIR
 readonly BOOTSTRAP_SUPPORTED_PROFILE="wsl"
+readonly BOOTSTRAP_APT_MIRROR_SCRIPT="${BOOTSTRAP_REPO_DIR}/system/ubuntu/configure-apt-mirror.sh"
+readonly BOOTSTRAP_SYSTEM_PACKAGES_SCRIPT="${BOOTSTRAP_REPO_DIR}/system/ubuntu/install-packages.sh"
 
 bootstrap_profile="wsl"
 bootstrap_use_china_mirror=false
 bootstrap_skip_docker=false
 bootstrap_preflight_only=false
+bootstrap_current_stage="startup"
 
 bootstrap_log() {
 	printf '\n==> %s\n' "$*"
@@ -30,9 +33,19 @@ bootstrap_on_error() {
 	local exit_code="$?"
 	local line_number="$1"
 
-	printf '初始化在第 %s 行失败，退出码：%s。\n' \
-		"$line_number" "$exit_code" >&2
+	printf '初始化在阶段 %s 的第 %s 行失败，退出码：%s。\n' \
+		"$bootstrap_current_stage" "$line_number" "$exit_code" >&2
 	exit "$exit_code"
+}
+
+bootstrap_run_stage() {
+	local stage_name="$1"
+
+	shift
+	bootstrap_current_stage="$stage_name"
+	bootstrap_log "阶段开始：$stage_name"
+	"$@"
+	bootstrap_log "阶段完成：$stage_name"
 }
 
 bootstrap_usage() {
@@ -48,8 +61,8 @@ bootstrap_usage() {
   -h, --help          显示帮助
 
 当前实施状态：
-  目前只启用只读 preflight。系统安装、Nix 安装和 Home Manager
-  激活阶段完成并经过一次性 WSL 验证后，才会开放完整执行。
+  已启用 preflight、可选 APT 中国镜像和系统基础包阶段。
+  Docker、Nix 安装和 Home Manager 自动激活尚未接入。
 EOF
 }
 
@@ -139,6 +152,45 @@ bootstrap_check_repository() {
 
 	[[ -f "$BOOTSTRAP_REPO_DIR/flake.lock" ]] ||
 		bootstrap_fail "仓库中缺少 flake.lock。"
+
+	[[ -x "$BOOTSTRAP_APT_MIRROR_SCRIPT" ]] ||
+		bootstrap_fail "APT 镜像脚本不存在或不可执行：$BOOTSTRAP_APT_MIRROR_SCRIPT"
+
+	[[ -x "$BOOTSTRAP_SYSTEM_PACKAGES_SCRIPT" ]] ||
+		bootstrap_fail "系统包脚本不存在或不可执行：$BOOTSTRAP_SYSTEM_PACKAGES_SCRIPT"
+}
+
+bootstrap_check_network() {
+	local network_host
+	local network_url
+
+	command -v getent >/dev/null ||
+		bootstrap_fail "找不到 getent，无法执行 DNS 检查。"
+
+	if [[ "$bootstrap_use_china_mirror" == true ]]; then
+		network_host="mirrors.aliyun.com"
+		network_url="https://mirrors.aliyun.com/ubuntu/dists/noble/InRelease"
+	else
+		network_host="archive.ubuntu.com"
+		network_url="https://archive.ubuntu.com/ubuntu/dists/noble/InRelease"
+	fi
+
+	getent ahosts "$network_host" >/dev/null ||
+		bootstrap_fail "DNS 无法解析：$network_host"
+
+	if command -v curl >/dev/null; then
+		curl \
+			--fail \
+			--head \
+			--location \
+			--max-time 15 \
+			--silent \
+			--show-error \
+			"$network_url" >/dev/null ||
+			bootstrap_fail "无法访问软件源：$network_url"
+	else
+		bootstrap_warn "尚未安装 curl，只完成 DNS 检查；连接测试交给 APT 阶段。"
+	fi
 }
 
 bootstrap_report_tools() {
@@ -156,8 +208,6 @@ bootstrap_report_tools() {
 }
 
 bootstrap_preflight() {
-	bootstrap_log "执行只读环境检查"
-
 	bootstrap_check_not_root
 	bootstrap_check_profile
 	bootstrap_load_os_release
@@ -166,6 +216,7 @@ bootstrap_preflight() {
 	bootstrap_check_user
 	bootstrap_check_systemd
 	bootstrap_check_repository
+	bootstrap_check_network
 
 	printf '  profile        %s\n' "$bootstrap_profile"
 	printf '  os             %s %s\n' "${PRETTY_NAME:-Ubuntu}" "${VERSION_CODENAME:-}"
@@ -175,23 +226,48 @@ bootstrap_preflight() {
 	printf '  china mirror   %s\n' "$bootstrap_use_china_mirror"
 	printf '  skip docker    %s\n' "$bootstrap_skip_docker"
 	bootstrap_report_tools
+}
 
-	bootstrap_log "Preflight 通过"
+bootstrap_prepare_sudo() {
+	command -v sudo >/dev/null ||
+		bootstrap_fail "找不到 sudo，无法执行系统阶段。"
+
+	bootstrap_log "系统阶段需要 sudo 权限"
+	sudo -v
+}
+
+bootstrap_configure_apt() {
+	if [[ "$bootstrap_use_china_mirror" != true ]]; then
+		printf '  未启用 --china-mirror，保留当前 Ubuntu APT 源。\n'
+		return
+	fi
+
+	sudo -- "$BOOTSTRAP_APT_MIRROR_SCRIPT"
+}
+
+bootstrap_install_system_packages() {
+	sudo -- "$BOOTSTRAP_SYSTEM_PACKAGES_SCRIPT"
+}
+
+bootstrap_report_partial_completion() {
+	bootstrap_warn "Docker、Nix 安装和 Home Manager 自动激活尚未接入 bootstrap。"
+	bootstrap_warn "本次只完成了当前已开放的安全系统阶段。"
 }
 
 bootstrap_main() {
 	trap 'bootstrap_on_error "$LINENO"' ERR
 
 	bootstrap_parse_args "$@"
-	bootstrap_preflight
+	bootstrap_run_stage "preflight" bootstrap_preflight
 
 	if [[ "$bootstrap_preflight_only" == true ]]; then
 		exit 0
 	fi
 
-	bootstrap_warn "完整 bootstrap 尚未开放；本次只完成了 preflight。"
-	bootstrap_warn "请使用 --preflight-only，或继续完成 MIGRATION-TASKS.md 中的系统阶段。"
-	exit 2
+	bootstrap_run_stage "prepare_sudo" bootstrap_prepare_sudo
+	bootstrap_run_stage "configure_apt" bootstrap_configure_apt
+	bootstrap_run_stage "install_system_packages" bootstrap_install_system_packages
+	bootstrap_report_partial_completion
 }
 
 bootstrap_main "$@"

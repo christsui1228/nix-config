@@ -44,14 +44,23 @@ CUDA、NVIDIA 或 TablePlus 等第三方 APT 源。备份保存在
 迁移前的旧配置保存在
 `~/.config/home-manager.backup-20260730`，确认后续迁移稳定前暂不删除。
 
-只运行新机初始化的环境检查：
+只运行新机初始化的只读环境检查：
 
 ```bash
 ./bootstrap.sh --profile wsl --preflight-only
 ```
 
-完整 bootstrap 尚在实现中。在任务明确完成前，不要使用旧
-`~/setup/install_docker.sh`，它包含删除 Docker 数据的操作。
+运行当前已开放的安全系统阶段：
+
+```bash
+./bootstrap.sh --profile wsl --china-mirror
+```
+
+当前该命令只执行环境与网络检查、可选 APT 镜像配置和基础系统包安装。
+它会明确停在 Docker、Nix 安装和 Home Manager 自动激活之前。完整
+bootstrap 仍在实现中。
+
+不要使用旧 `~/setup/install_docker.sh`，它包含删除 Docker 数据的操作。
 
 ## 文档
 
