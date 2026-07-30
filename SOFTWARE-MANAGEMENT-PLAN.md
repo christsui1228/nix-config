@@ -27,7 +27,7 @@
 - Nix 2.34.6
 - Home Manager 26.11-pre
 - 当前 Home Manager 配置可以正常求值和构建
-- 当前激活的是 Home Manager 第 8 代
+- 当前激活的是 Home Manager 第 9 代
 
 ### 2.2 已发现的软件来源
 
@@ -35,7 +35,7 @@
 |---|---|---|
 | APT/dpkg | Docker、CUDA、NVIDIA、GUI、系统库 | 只保留系统级软件 |
 | Home Manager | Fish、Git、Zellij、Yazi、常用 CLI | 作为用户软件主要入口 |
-| 独立 `nix profile` | `gh`、`mosh` | 迁入 Home Manager |
+| 独立 `nix profile` | 只剩 Home Manager 管理入口 | 不再临时安装用户 CLI |
 | Nix channel | 旧 Home Manager master channel | flake 验证后移除 |
 | npm/FNM | Claude、Codex、OpenCode、OpenClaw 等 | 用独立清单和 lockfile 管理 |
 | pipx/PDM | Copier、PDM | 暂时保留，之后评估迁入 Nix |
@@ -289,19 +289,21 @@ git commit
 
 迁移时应先备份旧目录，不应直接删除。
 
-### 6.2 同时使用 flake 和 channel
+### 6.2 旧 Home Manager channel（已处理）
 
-当前仍存在旧 channel：
+审计时曾存在旧 channel：
 
 ```text
 home-manager https://github.com/nix-community/home-manager/archive/master.tar.gz
 ```
 
-flake 已经提供 Home Manager input，因此该 channel 属于重复来源。确认 flake 可以正常切换后，应移除旧 channel。
+flake 已经提供 Home Manager input，因此该 channel 属于重复来源。完成
+flake 构建和切换验证后已经移除。
 
-### 6.3 `gh` 和 `mosh` 独立安装
+### 6.3 `gh` 和 `mosh` 独立安装（已处理）
 
-`gh` 和 `mosh` 当前通过独立 `nix profile` 安装，应先加入 Home Manager，再从独立 profile 移除。
+`gh` 和 `mosh` 已加入 Home Manager，并从独立 profile 精确移除。当前
+`nix profile list` 只剩 Home Manager 管理的 `home-manager-path`。
 
 ### 6.4 PATH 和 Nix 初始化重复
 
@@ -416,10 +418,12 @@ Neovim 0.11.5
 
 ### 阶段三：消除 Nix 重复入口
 
-1. 将 `gh` 和 `mosh` 加入 `packages.nix`。
-2. Home Manager 构建并切换。
-3. 验证命令版本和配置。
-4. 从独立 `nix profile` 移除对应软件。
+该阶段已经完成：
+
+1. `gh` 和 `mosh` 已加入 `packages.nix`。
+2. Home Manager 已构建并激活 generation 9。
+3. 已验证命令版本和 Store 来源。
+4. 独立 `nix profile` 中对应软件已经移除。
 
 ### 阶段四：清理配置漂移
 

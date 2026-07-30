@@ -228,13 +228,25 @@ nix-config/
 - [x] bootstrap 的 `restore_node_tools` 与 Node postflight 路径通过。
 - [ ] 全新机器首次下载 Node 的分支尚未在一次性纯净 WSL 验证。
 
+### 4.11 `gh` 和 `mosh` 来源统一结果
+
+- [x] 将 `gh` 和 `mosh` 加入 Home Manager `home.packages`。
+- [x] `nix flake check` 和 activation package 构建通过。
+- [x] 首次激活在独立 profile 同路径冲突处停止，没有覆盖旧包。
+- [x] 只移除独立 profile 中名为 `gh`、`mosh` 的两个条目，再完成激活。
+- [x] 当前独立 profile 只剩 Home Manager 管理的 `home-manager-path`。
+- [x] 激活 Home Manager generation 9。
+- [x] 验证 `gh` 2.96.0 和 `mosh` 1.4.0 均来自 Home Manager。
+- [x] 回归验证 Fish、FNM、Node `v22.22.2` 和中国镜像环境变量。
+- [ ] generation 8 回滚入口仍保留，但尚未实际执行回滚演练。
+
 ## 5. 总体完成条件
 
 所有任务完成后应满足：
 
 - [x] 仓库只有一个 Home Manager 配置入口。
 - [x] 不再依赖 Home Manager channel。
-- [ ] 普通用户软件不再通过临时 `nix profile install` 安装。
+- [x] 普通用户软件不再通过临时 `nix profile install` 安装。
 - [ ] `bootstrap.sh` 可以重复运行。
 - [ ] 第二次运行 bootstrap 不产生破坏性变化。
 - [x] bootstrap 不允许以 root 整体运行。
@@ -640,8 +652,8 @@ home-manager switch --flake ~/nix-config#chris
 ## HM-002：创建 `modules/packages.nix`
 
 - [x] 迁移现有 `home.packages`。
-- [ ] 将 `gh` 加入 Home Manager。
-- [ ] 将 `mosh` 加入 Home Manager。
+- [x] 将 `gh` 加入 Home Manager。
+- [x] 将 `mosh` 加入 Home Manager。
 - [x] 决定不为 DBUI 安装完整 PostgreSQL 18 Nix 包，改由 APT
   `postgresql-client` 提供 `psql`。
 - [ ] 评估加入 `mpv`。
@@ -650,9 +662,10 @@ home-manager switch --flake ~/nix-config#chris
 迁移 `gh`、`mosh` 时：
 
 1. 先加入 Home Manager。
-2. 构建和切换。
-3. 验证命令。
-4. 最后从独立 `nix profile` 移除。
+2. 构建配置。
+3. 如果激活因同路径、同优先级冲突停止，只移除独立 profile 中的
+   `gh`、`mosh`。
+4. 重新激活并验证命令；不要移除 Home Manager 的 `home-manager-path`。
 
 ## HM-003：创建 `modules/shell.nix`
 
@@ -881,7 +894,7 @@ which -a git fish gh mosh nvim node npm pnpm
 ```
 
 - [ ] 每个主要命令都有预期来源。
-- [ ] `gh` 和 `mosh` 来自 Home Manager。
+- [x] `gh` 和 `mosh` 来自 Home Manager。
 - [x] 不存在 NVM 与 FNM 冲突。
 - [ ] 不存在多个 pnpm 来源竞争。
 - [ ] PATH 不包含重复的 Nix 初始化结果。
