@@ -649,16 +649,44 @@ home-manager switch --flake ~/nix-config#chris
 
 ## HM-006：处理 tmux 与 Zellij
 
-选择一种：
+已于 2026-07-31 决定以 tmux 为主。迁移期间保留 Zellij 作为回退，
+tmux 完成验证后再决定是否移除 Zellij。
 
-- [ ] 只保留 Zellij。
-- [ ] 同时保留 tmux，并由 Home Manager 管理 tmux 软件与插件。
+当前审计结果：
 
-无论选择哪种：
+- [x] 确认 Ubuntu APT 提供的当前版本为 tmux 3.4。
+- [x] 确认锁定的 nixpkgs 提供 tmux 3.7b。
+- [x] 确认 `~/.tmux.conf` 和 `~/.tmux.conf.local` 分别指向
+  `~/tmux-config/` 中的对应文件。
+- [x] 确认 `~/tmux-config/.tmux.conf.local` 有尚未提交的
+  Resurrect、Continuum 和 Neovim session 恢复配置。
+- [x] 确认 `~/.tmux/.tmux.conf` 的未提交 vi-mode 设置已经存在于
+  当前生效的个人配置中，不是需要单独迁移的唯一内容。
+- [x] 确认当前插件会在 tmux 启动和配置重载时自动联网更新。
 
-- [ ] 处理 `~/.tmux` 的未提交修改。
-- [ ] 保留 `~/tmux-config` 的个人配置历史。
-- [ ] 消除两个仓库对同一最终配置文件的竞争。
+迁移任务：
+
+- [ ] 先检查并提交 `~/tmux-config/.tmux.conf.local` 的现有修改。
+- [ ] 保留 `~/tmux-config` 的个人配置历史，并将其作为锁定的配置来源
+  接入 `nix-config`，避免纯净恢复依赖手工复制。
+- [ ] 由 Home Manager 安装锁定的 tmux 3.7b。
+- [ ] 使用 Home Manager/Nix 固定 Resurrect、Continuum 和 SessionX
+  插件版本。
+- [ ] 关闭 Oh My Tmux 的启动时、重载时插件自动更新。
+- [ ] 使用 Nix store 中 Fish 的绝对路径替代依赖 PATH 的
+  `set -g default-command fish`。
+- [ ] 明确是否接受 `@resurrect-capture-pane-contents 'on'` 将终端内容
+  写入恢复文件的隐私风险。
+- [ ] 构建新配置成功后，先用 Resurrect 保存当前 tmux 会话。
+- [ ] 确认没有不可中断的前台任务后，完整停止 tmux 3.4 server。
+- [ ] 激活 Home Manager，并确认新的 server 与 client 都是 tmux 3.7b。
+- [ ] 验证 `Ctrl-a`、`Alt-hjkl`、`Alt-s`、分屏、复制模式、SessionX、
+  Resurrect 和 Continuum。
+- [ ] 验证稳定后清理重复的 `~/.tmux` 上游仓库。
+- [ ] 验证稳定后再决定是否从 APT 清单移除 tmux、是否移除 Zellij。
+
+升级时不能只替换客户端二进制。tmux 官方要求版本升级后完整重启
+server；在执行 `tmux kill-server` 前必须先保存会话并确认运行中的任务。
 
 ---
 

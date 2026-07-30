@@ -324,10 +324,20 @@ flake 已经提供 Home Manager input，因此该 channel 属于重复来源。�
 - `~/.tmux` 上游配置仓库
 - `~/tmux-config` 个人配置仓库
 
-两个 tmux 仓库都有不同职责，其中上游仓库还有未提交修改。应决定：
+已决定以 tmux 为主要终端复用器，迁移期间保留 Zellij 作为回退。目标
+结构是由 Home Manager 安装锁定的 tmux 3.7b，由 Nix 固定
+Resurrect、Continuum 和 SessionX 插件版本，同时保留
+`~/tmux-config` 的个人配置历史。
 
-- 只保留 Zellij；或
-- 同时保留 tmux，但由 Home Manager 管理 tmux 软件和最终配置。
+当前 `~/tmux-config/.tmux.conf.local` 还有未提交的会话恢复配置，必须
+先归档这些修改再接入 Home Manager。`~/.tmux` 上游仓库中的 vi-mode
+修改已经存在于当前生效的个人配置，不需要保留为第二个配置来源。
+
+升级完成前不清理 APT tmux、Zellij 或 `~/.tmux`。切换 tmux 版本时先
+通过 Resurrect 保存会话，再完整停止旧的 tmux 3.4 server；随后验证
+3.7b 下的 `Ctrl-a`、`Alt-hjkl`、`Alt-s`、分屏、复制模式、SessionX
+和会话恢复。由于 pane 内容恢复可能把终端输出写入磁盘，启用
+`@resurrect-capture-pane-contents` 前还需要接受相应的隐私风险。
 
 ### 6.8 数据库客户端版本不一致
 
