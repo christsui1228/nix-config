@@ -9,14 +9,34 @@
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, ... }:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      home-manager,
+      ...
+    }:
     let
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
-    in {
-      homeConfigurations."chris" = home-manager.lib.homeManagerConfiguration {
+      chrisHome = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
-        modules = [ ./home.nix ];
+        modules = [ ./home/chris.nix ];
+      };
+    in
+    {
+      homeConfigurations."chris" = chrisHome;
+
+      checks.${system}.home = chrisHome.activationPackage;
+
+      formatter.${system} = pkgs.nixfmt;
+
+      devShells.${system}.default = pkgs.mkShell {
+        packages = with pkgs; [
+          nixfmt
+          shellcheck
+          shfmt
+        ];
       };
     };
 }

@@ -1,0 +1,10 @@
+# Ubuntu/WSL 系统层的最小基础包。
+# 普通用户 CLI 应由 Home Manager 管理，不要加入此文件。
+
+ca-certificates
+curl
+git
+unzip
+xz-utils
+build-essential
+python3-venv
