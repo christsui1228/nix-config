@@ -8,5 +8,15 @@
 - Docker daemon 代理
 - CUDA、NVIDIA 和 GUI 软件的人工恢复说明
 
-当前仅建立目录和包清单。系统安装脚本尚未开放，现阶段不要从这里修改
-APT、Docker 或 `/etc`。
+APT 镜像脚本已经可以独立使用：
+
+```bash
+sudo ./system/ubuntu/configure-apt-mirror.sh
+```
+
+该脚本仅支持 Ubuntu 24.04 noble，只替换 deb822 格式的
+`/etc/apt/sources.list.d/ubuntu.sources`。它会先创建带时间戳的备份，
+通过 `apt-get update` 验证；验证失败时自动恢复。Docker、CUDA、NVIDIA
+和 TablePlus 等第三方源不会被修改。
+
+其余系统安装脚本尚未开放。

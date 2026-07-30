@@ -27,7 +27,7 @@
 - Nix 2.34.6
 - Home Manager 26.05-pre
 - 当前 Home Manager 配置可以正常求值和构建
-- 当前激活的是 Home Manager 第 5 代
+- 当前激活的是 Home Manager 第 6 代
 
 ### 2.2 已发现的软件来源
 
@@ -136,6 +136,21 @@ node-tools/
 3. 在本仓库记录安装地址、版本检查方式和升级步骤。
 4. 不允许出现“只记得装过，但不知道从哪里装的”软件。
 
+### 3.6 中国大陆镜像
+
+镜像配置也按管理边界拆分：
+
+- Ubuntu 官方 APT 源由 `system/ubuntu/configure-apt-mirror.sh` 管理，
+  使用阿里云 HTTPS 镜像；Docker、CUDA、NVIDIA 和 TablePlus 等第三方
+  APT 源保持各自官方地址。
+- npm 和 pnpm 共用 Home Manager 声明的 `~/.npmrc`，使用 npmmirror。
+- pip 和 pipx 共用 `~/.config/pip/pip.conf`，PDM 使用自己的
+  `~/.config/pdm/config.toml`；两者都指向清华大学 PyPI 镜像。
+
+项目仍可在项目级 `.npmrc`、`pyproject.toml` 或命令行中覆盖默认镜像。
+镜像只改变包的下载位置，不代替 `package-lock.json`、`pnpm-lock.yaml`
+或 Python lockfile，也不改变项目依赖的版本选择。
+
 ## 4. 推荐的仓库结构
 
 当前只有一个主要用户和一台 WSL 主机，不需要拆成大量细碎模块。建议使用下面的结构：
@@ -148,6 +163,7 @@ nix-config/
 │   └── chris.nix
 ├── modules/
 │   ├── packages.nix
+│   ├── china-mirrors.nix
 │   ├── shell.nix
 │   ├── git.nix
 │   ├── terminal.nix
@@ -169,6 +185,7 @@ nix-config/
 
 - `home/chris.nix`：用户名、Home 目录、state version 和模块导入。
 - `modules/packages.nix`：通用用户软件列表。
+- `modules/china-mirrors.nix`：npm、pnpm、pip、pipx 和 PDM 的用户级镜像。
 - `modules/shell.nix`：Fish、Starship、fzf、fnm、别名和环境变量。
 - `modules/git.nix`：Git、Delta、Lazygit。
 - `modules/terminal.nix`：Zellij 和可选的 Alacritty 配置。

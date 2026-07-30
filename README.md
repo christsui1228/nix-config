@@ -30,6 +30,16 @@ home-manager switch
 home-manager switch --flake ~/nix-config#chris
 ```
 
+Home Manager 同时管理 npm、pnpm、pip、pipx 和 PDM 的中国大陆镜像配置。
+Ubuntu APT 的 HTTPS 阿里云镜像需要系统权限，可独立执行：
+
+```bash
+sudo ./system/ubuntu/configure-apt-mirror.sh
+```
+
+该脚本会备份并只修改 Ubuntu 官方 `ubuntu.sources`，不会修改 Docker、
+CUDA、NVIDIA 或 TablePlus 等第三方 APT 源。
+
 迁移前的旧配置保存在
 `~/.config/home-manager.backup-20260730`，确认后续迁移稳定前暂不删除。
 

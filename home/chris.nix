@@ -3,6 +3,7 @@
 {
   imports = [
     ../hosts/wsl.nix
+    ../modules/china-mirrors.nix
     ../modules/git.nix
     ../modules/terminal.nix
     ../modules/file-managers.nix
