@@ -756,18 +756,21 @@ tmux 完成验证后再决定是否移除 Zellij。
 - [x] 已有正确的 `~/tmux-config` 时只验证仓库、远端和必需文件，不自动
   fetch、pull、reset 或 checkout，也不覆盖本地修改。
 - [x] 由 Home Manager 安装并激活锁定的 tmux 3.7b。
-- [ ] 使用 Home Manager/Nix 固定 Resurrect、Continuum 和 SessionX
-  插件版本。
-- [ ] 关闭 Oh My Tmux 的启动时、重载时插件自动更新。
+- [x] 使用锁定 nixpkgs 中的 Resurrect、Continuum 和 SessionX，由
+  Home Manager 生成 `~/.config/tmux/nix-plugins.conf`。
+- [x] 关闭 Oh My Tmux 启动、重载时的插件自动更新和自动卸载；不再由
+  TPM 下载上述三个插件。
 - [ ] 使用 Nix store 中 Fish 的绝对路径替代依赖 PATH 的
   `set -g default-command fish`。
-- [ ] 明确是否接受 `@resurrect-capture-pane-contents 'on'` 将终端内容
-  写入恢复文件的隐私风险。
-- [x] 构建新配置成功；迁移时没有运行中的 tmux server，因此没有需要
-  Resurrect 保存的现有会话。
-- [x] 确认没有运行中的 tmux 3.4 server，无需执行 `tmux kill-server`。
-- [x] 激活 Home Manager，并使用不加载个人配置的隔离 socket 确认
-  新的 server 与 client 都是 tmux 3.7b；测试 server 已关闭。
+- [x] 默认关闭 `@resurrect-capture-pane-contents`，避免将终端内容写入
+  恢复文件；若以后确有需要，再单独决定是否接受隐私风险。
+- [x] 为当前 tmux 3.4 `daily` 会话保存 Resurrect 快照：2 个窗口、
+  5 个 pane，未生成 pane 内容归档。
+- [x] 激活 Home Manager，并使用加载个人配置的隔离 socket 确认
+  tmux 3.7b server、Resurrect、Continuum、SessionX 和快捷键可用；
+  测试 server 已关闭。
+- [ ] 当前 tmux 3.4 server 仍承载两个 Codex 和两个 Neovim；这些任务
+  正常退出后，从 tmux 外停止旧 server，再启动正式的 3.7b server。
 - [ ] 验证 `Ctrl-a`、`Alt-hjkl`、`Alt-s`、分屏、复制模式、SessionX、
   Resurrect 和 Continuum。
 - [ ] 验证稳定后清理重复的 `~/.tmux` 上游仓库。

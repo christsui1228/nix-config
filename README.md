@@ -93,7 +93,8 @@ GitHub 的 SSH 测试命令在认证成功时也会以状态码 1 退出；应�
 7. 只有构建成功后才更新 Home Manager profile 并激活；已有相同
    generation 时不会创建重复 generation。
    Home Manager 同时把 `~/.tmux.conf` 和 `~/.tmux.conf.local` 链接到
-   独立的 `~/tmux-config` 仓库。
+   独立的 `~/tmux-config` 仓库，并从锁定 nixpkgs 提供 Resurrect、
+   Continuum 和 SessionX；tmux 不会在启动或重载时自动更新插件。
 8. 按 `node-tools/default-node-version` 幂等恢复 FNM 默认 Node runtime；
    已安装目标版本时不会重复下载。
 9. 验证 Nix daemon、generation、`home-manager`、tmux 配置链接和默认

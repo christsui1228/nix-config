@@ -362,12 +362,16 @@ bootstrap 会在该仓库不存在时通过 SSH 克隆；已有正确仓库只�
 `~/.tmux` 上游仓库中的 vi-mode 修改已经存在于当前生效的个人配置，
 不需要保留为第二个配置来源。
 
-迁移时没有运行中的 tmux 3.4 server，因此无需保存或停止旧会话；
-隔离测试已确认 tmux 3.7b client 和 server 都可运行。清理 APT tmux、
-Zellij 或 `~/.tmux` 前，仍需验证个人配置下的 `Ctrl-a`、`Alt-hjkl`、
-`Alt-s`、分屏、复制模式、SessionX 和会话恢复。由于 pane 内容恢复
-可能把终端输出写入磁盘，启用
-`@resurrect-capture-pane-contents` 前还需要接受相应的隐私风险。
+当前正式会话仍由 tmux 3.4 server 承载，其中运行着两个 Codex 和两个
+Neovim，不能在任务完成前直接停止。已经在关闭 pane 内容捕获的前提下
+保存 Resurrect 快照，并使用隔离 socket 确认 tmux 3.7b 与个人配置可
+正常加载。
+
+Resurrect、Continuum 和 SessionX 已改由锁定 nixpkgs 提供，Oh My Tmux
+的插件自动更新和自动卸载均已关闭。清理 APT tmux、Zellij 或 `~/.tmux`
+前，仍需在正式 3.7b server 下验证 `Ctrl-a`、`Alt-hjkl`、`Alt-s`、
+分屏、复制模式、SessionX 和会话恢复。默认关闭
+`@resurrect-capture-pane-contents`，避免把终端输出写入磁盘。
 
 ### 6.8 数据库客户端版本不一致
 

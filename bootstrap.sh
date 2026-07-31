@@ -503,6 +503,7 @@ bootstrap_postflight() {
 	local tmux_bin
 	local tmux_config_link
 	local tmux_local_config_link
+	local tmux_nix_plugins_link
 
 	profile="${XDG_STATE_HOME:-$HOME/.local/state}/nix/profiles/home-manager"
 	home_manager_bin="$bootstrap_home_manager_activation/home-path/bin/home-manager"
@@ -510,6 +511,7 @@ bootstrap_postflight() {
 	tmux_bin="$bootstrap_home_manager_activation/home-path/bin/tmux"
 	tmux_config_link="$(readlink -- "$HOME/.tmux.conf" 2>/dev/null || true)"
 	tmux_local_config_link="$(readlink -- "$HOME/.tmux.conf.local" 2>/dev/null || true)"
+	tmux_nix_plugins_link="$(readlink -- "$HOME/.config/tmux/nix-plugins.conf" 2>/dev/null || true)"
 
 	bootstrap_verify_nix
 
@@ -529,6 +531,9 @@ bootstrap_postflight() {
 
 	[[ "$tmux_local_config_link" == /nix/store/*-home-manager-files/.tmux.conf.local ]] ||
 		bootstrap_fail "$HOME/.tmux.conf.local 尚未由 Home Manager 管理。"
+
+	[[ "$tmux_nix_plugins_link" == /nix/store/*-home-manager-files/.config/tmux/nix-plugins.conf ]] ||
+		bootstrap_fail "$HOME/.config/tmux/nix-plugins.conf 尚未由 Home Manager 管理。"
 
 	[[ "$(readlink -f -- "$HOME/.tmux.conf" 2>/dev/null || true)" == "$HOME/tmux-config/.tmux.conf" ]] ||
 		bootstrap_fail "$HOME/.tmux.conf 没有指向 tmux-config。"
