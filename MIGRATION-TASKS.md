@@ -498,6 +498,7 @@ system/inventory/
 ca-certificates
 curl
 git
+openssh-client
 unzip
 xz-utils
 build-essential
@@ -749,10 +750,12 @@ tmux 完成验证后再决定是否移除 Zellij。
 
 迁移任务：
 
-- [ ] 先检查并提交 `~/tmux-config/.tmux.conf.local` 的现有修改。
-- [ ] 保留 `~/tmux-config` 的个人配置历史，并将其作为锁定的配置来源
-  接入 `nix-config`，避免纯净恢复依赖手工复制。
-- [ ] 由 Home Manager 安装锁定的 tmux 3.7b。
+- [x] 检查 `~/tmux-config`；当前 `main` 与 `origin/main` 同步且工作树干净。
+- [x] 保留 `~/tmux-config` 的独立 Git 历史；bootstrap 在目录不存在时
+  通过 SSH 克隆，Home Manager 管理指向该仓库的两个配置链接。
+- [x] 已有正确的 `~/tmux-config` 时只验证仓库、远端和必需文件，不自动
+  fetch、pull、reset 或 checkout，也不覆盖本地修改。
+- [x] 由 Home Manager 安装并激活锁定的 tmux 3.7b。
 - [ ] 使用 Home Manager/Nix 固定 Resurrect、Continuum 和 SessionX
   插件版本。
 - [ ] 关闭 Oh My Tmux 的启动时、重载时插件自动更新。
@@ -760,9 +763,11 @@ tmux 完成验证后再决定是否移除 Zellij。
   `set -g default-command fish`。
 - [ ] 明确是否接受 `@resurrect-capture-pane-contents 'on'` 将终端内容
   写入恢复文件的隐私风险。
-- [ ] 构建新配置成功后，先用 Resurrect 保存当前 tmux 会话。
-- [ ] 确认没有不可中断的前台任务后，完整停止 tmux 3.4 server。
-- [ ] 激活 Home Manager，并确认新的 server 与 client 都是 tmux 3.7b。
+- [x] 构建新配置成功；迁移时没有运行中的 tmux server，因此没有需要
+  Resurrect 保存的现有会话。
+- [x] 确认没有运行中的 tmux 3.4 server，无需执行 `tmux kill-server`。
+- [x] 激活 Home Manager，并使用不加载个人配置的隔离 socket 确认
+  新的 server 与 client 都是 tmux 3.7b；测试 server 已关闭。
 - [ ] 验证 `Ctrl-a`、`Alt-hjkl`、`Alt-s`、分屏、复制模式、SessionX、
   Resurrect 和 Continuum。
 - [ ] 验证稳定后清理重复的 `~/.tmux` 上游仓库。

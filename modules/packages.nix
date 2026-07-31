@@ -8,6 +8,7 @@ with pkgs;
   mosh
   pgcli
   lazydocker
+  tmux
   pnpm
   fnm
 ]

@@ -60,10 +60,21 @@ CUDA、NVIDIA 或 TablePlus 等第三方 APT 源。备份保存在
 在纯净 WSL 中克隆仓库后，运行当前已实现的恢复阶段：
 
 ```bash
-git clone https://github.com/christsui1228/nix-config.git ~/nix-config
+sudo apt-get update
+sudo apt-get install --yes git openssh-client
+
+# 从加密备份或密码管理器恢复 SSH Key 后，先人工核对 GitHub 主机指纹。
+ssh -T git@github.com
+
+git clone git@github.com:christsui1228/nix-config.git ~/nix-config
 cd ~/nix-config
 ./bootstrap.sh --profile wsl --china-mirror --skip-docker
 ```
+
+GitHub 的 SSH 测试命令在认证成功时也会以状态码 1 退出；应以输出中是否
+包含自己的 GitHub 用户名为准。首次接受主机密钥前，必须对照
+[GitHub 官方 SSH 指纹](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints)
+人工核对。bootstrap 不会生成、复制或修改 SSH 私钥。
 
 顶层脚本必须由普通用户运行，禁止使用 `sudo ./bootstrap.sh`。脚本只在
 需要系统权限的阶段调用 `sudo`。
@@ -72,16 +83,21 @@ cd ~/nix-config
 
 1. 检查 WSL、Ubuntu、架构、用户、systemd、DNS 和网络。
 2. 可选切换 Ubuntu APT 中国镜像并安装基础系统包。
-3. 已有 Nix 时验证并跳过安装；否则从 `https://nixos.org/nix/install`
+3. 检查独立的 `~/tmux-config` 仓库；目录不存在时通过 SSH 完整克隆，
+   已有正确仓库时保留当前分支和本地修改，不自动 fetch 或 pull。
+4. 已有 Nix 时验证并跳过安装；否则从 `https://nixos.org/nix/install`
    下载官方 installer，以 multi-user daemon 模式安装且不添加 channel。
-4. 规范 Nix 官方 Shell 初始化块和 Bash PATH；未知格式会停止，修改前
+5. 规范 Nix 官方 Shell 初始化块和 Bash PATH；未知格式会停止，修改前
    备份到 `/var/backups/nix-config/`。
-5. 使用 `flake.lock` 构建 Home Manager generation。
-6. 只有构建成功后才更新 Home Manager profile 并激活；已有相同
+6. 使用 `flake.lock` 构建 Home Manager generation。
+7. 只有构建成功后才更新 Home Manager profile 并激活；已有相同
    generation 时不会创建重复 generation。
-7. 按 `node-tools/default-node-version` 幂等恢复 FNM 默认 Node runtime；
+   Home Manager 同时把 `~/.tmux.conf` 和 `~/.tmux.conf.local` 链接到
+   独立的 `~/tmux-config` 仓库。
+8. 按 `node-tools/default-node-version` 幂等恢复 FNM 默认 Node runtime；
    已安装目标版本时不会重复下载。
-8. 验证 Nix daemon、generation、`home-manager` 和默认 Node 版本。
+9. 验证 Nix daemon、generation、`home-manager`、tmux 配置链接和默认
+   Node 版本。
 
 Shell 初始化也可以独立检查：
 
@@ -92,6 +108,17 @@ Shell 初始化也可以独立检查：
 默认 Node runtime 已接入；Docker 和版本锁定的 Node CLI 集合尚未接入，
 因此建议当前显式使用 `--skip-docker`。首次安装流程仍需在一次性纯净
 WSL 中完成端到端验证，目前不能视为正式切换完成。
+
+独立检查或恢复 tmux 配置仓库：
+
+```bash
+./external-repos/restore-tmux-config.sh --check
+./external-repos/restore-tmux-config.sh
+```
+
+恢复脚本只在目录不存在时克隆
+`git@github.com:christsui1228/tmux-config.git`。如果路径属于其他仓库或
+普通目录，它会停止而不会覆盖；已有正确仓库不会被自动更新。
 
 默认 Node 版本也可以独立恢复：
 

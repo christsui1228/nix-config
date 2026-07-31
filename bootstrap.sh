@@ -11,6 +11,7 @@ readonly BOOTSTRAP_NIX_SHELL_SCRIPT="${BOOTSTRAP_REPO_DIR}/system/nix/normalize-
 readonly BOOTSTRAP_NIX_INSTALLER_URL="https://nixos.org/nix/install"
 readonly BOOTSTRAP_NODE_RUNTIME_SCRIPT="${BOOTSTRAP_REPO_DIR}/node-tools/restore-runtime.sh"
 readonly BOOTSTRAP_NODE_VERSION_FILE="${BOOTSTRAP_REPO_DIR}/node-tools/default-node-version"
+readonly BOOTSTRAP_TMUX_CONFIG_SCRIPT="${BOOTSTRAP_REPO_DIR}/external-repos/restore-tmux-config.sh"
 
 bootstrap_profile="wsl"
 bootstrap_use_china_mirror=false
@@ -79,8 +80,8 @@ bootstrap_usage() {
 
 当前实施状态：
   已启用 preflight、可选 APT 中国镜像、系统基础包、Nix 和
-  Shell 初始化规范、Home Manager 阶段，并恢复声明的默认 Node runtime。
-  Docker 和版本锁定的 Node CLI 集合尚未接入。
+  Shell 初始化规范、tmux-config SSH 恢复、Home Manager 阶段，并恢复
+  声明的默认 Node runtime。Docker 和版本锁定的 Node CLI 集合尚未接入。
 EOF
 }
 
@@ -185,6 +186,9 @@ bootstrap_check_repository() {
 
 	[[ -r "$BOOTSTRAP_NODE_VERSION_FILE" ]] ||
 		bootstrap_fail "Node 版本清单不存在或不可读：$BOOTSTRAP_NODE_VERSION_FILE"
+
+	[[ -x "$BOOTSTRAP_TMUX_CONFIG_SCRIPT" ]] ||
+		bootstrap_fail "tmux-config 恢复脚本不存在或不可执行：$BOOTSTRAP_TMUX_CONFIG_SCRIPT"
 }
 
 bootstrap_check_network() {
@@ -244,6 +248,7 @@ bootstrap_preflight() {
 	bootstrap_check_systemd
 	bootstrap_check_repository
 	bootstrap_check_network
+	"$BOOTSTRAP_TMUX_CONFIG_SCRIPT" --check
 
 	printf '  profile        %s\n' "$bootstrap_profile"
 	printf '  os             %s %s\n' "${PRETTY_NAME:-Ubuntu}" "${VERSION_CODENAME:-}"
@@ -274,6 +279,10 @@ bootstrap_configure_apt() {
 
 bootstrap_install_system_packages() {
 	sudo -- "$BOOTSTRAP_SYSTEM_PACKAGES_SCRIPT"
+}
+
+bootstrap_restore_tmux_config() {
+	"$BOOTSTRAP_TMUX_CONFIG_SCRIPT"
 }
 
 bootstrap_ensure_runtime_dir() {
@@ -491,10 +500,16 @@ bootstrap_postflight() {
 	local fnm_bin
 	local home_manager_bin
 	local profile
+	local tmux_bin
+	local tmux_config_link
+	local tmux_local_config_link
 
 	profile="${XDG_STATE_HOME:-$HOME/.local/state}/nix/profiles/home-manager"
 	home_manager_bin="$bootstrap_home_manager_activation/home-path/bin/home-manager"
 	fnm_bin="$bootstrap_home_manager_activation/home-path/bin/fnm"
+	tmux_bin="$bootstrap_home_manager_activation/home-path/bin/tmux"
+	tmux_config_link="$(readlink -- "$HOME/.tmux.conf" 2>/dev/null || true)"
+	tmux_local_config_link="$(readlink -- "$HOME/.tmux.conf.local" 2>/dev/null || true)"
 
 	bootstrap_verify_nix
 
@@ -506,6 +521,21 @@ bootstrap_postflight() {
 
 	"$home_manager_bin" --version
 
+	[[ -x "$tmux_bin" ]] ||
+		bootstrap_fail "激活后的用户环境中找不到 tmux。"
+
+	[[ "$tmux_config_link" == /nix/store/*-home-manager-files/.tmux.conf ]] ||
+		bootstrap_fail "$HOME/.tmux.conf 尚未由 Home Manager 管理。"
+
+	[[ "$tmux_local_config_link" == /nix/store/*-home-manager-files/.tmux.conf.local ]] ||
+		bootstrap_fail "$HOME/.tmux.conf.local 尚未由 Home Manager 管理。"
+
+	[[ "$(readlink -f -- "$HOME/.tmux.conf" 2>/dev/null || true)" == "$HOME/tmux-config/.tmux.conf" ]] ||
+		bootstrap_fail "$HOME/.tmux.conf 没有指向 tmux-config。"
+
+	[[ "$(readlink -f -- "$HOME/.tmux.conf.local" 2>/dev/null || true)" == "$HOME/tmux-config/.tmux.conf.local" ]] ||
+		bootstrap_fail "$HOME/.tmux.conf.local 没有指向 tmux-config。"
+
 	IFS= read -r declared_node_version <"$BOOTSTRAP_NODE_VERSION_FILE"
 	actual_node_version="$(
 		"$fnm_bin" exec --using "$declared_node_version" node --version
@@ -515,6 +545,7 @@ bootstrap_postflight() {
 			"postflight Node 版本不匹配：期望 v$declared_node_version，实际 $actual_node_version"
 
 	printf '  Home Manager profile 验证完成。\n'
+	printf '  tmux 与外部配置链接验证完成：%s\n' "$("$tmux_bin" -V)"
 	printf '  默认 Node runtime 验证完成：%s\n' "$actual_node_version"
 }
 
@@ -541,6 +572,7 @@ bootstrap_main() {
 	bootstrap_run_stage "prepare_sudo" bootstrap_prepare_sudo
 	bootstrap_run_stage "configure_apt" bootstrap_configure_apt
 	bootstrap_run_stage "install_system_packages" bootstrap_install_system_packages
+	bootstrap_run_stage "restore_tmux_config" bootstrap_restore_tmux_config
 	bootstrap_run_stage "install_nix" bootstrap_install_nix
 	bootstrap_run_stage "normalize_nix_shell" bootstrap_normalize_nix_shell
 	bootstrap_run_stage "build_home_manager" bootstrap_build_home_manager

@@ -8,6 +8,7 @@
     ../modules/terminal.nix
     ../modules/file-managers.nix
     ../modules/shell.nix
+    ../modules/tmux.nix
   ];
 
   home.username = "chris";

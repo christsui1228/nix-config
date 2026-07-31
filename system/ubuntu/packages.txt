@@ -4,6 +4,7 @@
 ca-certificates
 curl
 git
+openssh-client
 unzip
 xz-utils
 build-essential

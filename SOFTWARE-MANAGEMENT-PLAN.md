@@ -347,24 +347,26 @@ daemon 的 `/nix/var/nix/profiles/default/bin`。这是必要声明：Home Manag
 
 当前同时存在：
 
-- APT 安装的 tmux
+- APT 安装的 tmux 3.4，暂作回退
 - Zellij
 - `~/.tmux` 上游配置仓库
 - `~/tmux-config` 个人配置仓库
 
-已决定以 tmux 为主要终端复用器，迁移期间保留 Zellij 作为回退。目标
-结构是由 Home Manager 安装锁定的 tmux 3.7b，由 Nix 固定
-Resurrect、Continuum 和 SessionX 插件版本，同时保留
-`~/tmux-config` 的个人配置历史。
+已决定以 tmux 为主要终端复用器，迁移期间保留 Zellij 作为回退。
+Home Manager 已安装锁定的 tmux 3.7b，并管理 `~/.tmux.conf` 和
+`~/.tmux.conf.local`，最终指向独立的 `~/tmux-config` 仓库。
+bootstrap 会在该仓库不存在时通过 SSH 克隆；已有正确仓库只验证而不
+自动更新，以免覆盖本地分支或修改。
 
-当前 `~/tmux-config/.tmux.conf.local` 还有未提交的会话恢复配置，必须
-先归档这些修改再接入 Home Manager。`~/.tmux` 上游仓库中的 vi-mode
-修改已经存在于当前生效的个人配置，不需要保留为第二个配置来源。
+当前 `~/tmux-config` 的 `main` 已与 `origin/main` 同步且工作树干净。
+`~/.tmux` 上游仓库中的 vi-mode 修改已经存在于当前生效的个人配置，
+不需要保留为第二个配置来源。
 
-升级完成前不清理 APT tmux、Zellij 或 `~/.tmux`。切换 tmux 版本时先
-通过 Resurrect 保存会话，再完整停止旧的 tmux 3.4 server；随后验证
-3.7b 下的 `Ctrl-a`、`Alt-hjkl`、`Alt-s`、分屏、复制模式、SessionX
-和会话恢复。由于 pane 内容恢复可能把终端输出写入磁盘，启用
+迁移时没有运行中的 tmux 3.4 server，因此无需保存或停止旧会话；
+隔离测试已确认 tmux 3.7b client 和 server 都可运行。清理 APT tmux、
+Zellij 或 `~/.tmux` 前，仍需验证个人配置下的 `Ctrl-a`、`Alt-hjkl`、
+`Alt-s`、分屏、复制模式、SessionX 和会话恢复。由于 pane 内容恢复
+可能把终端输出写入磁盘，启用
 `@resurrect-capture-pane-contents` 前还需要接受相应的隐私风险。
 
 ### 6.8 数据库客户端版本不一致
