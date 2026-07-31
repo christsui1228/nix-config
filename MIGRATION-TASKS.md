@@ -770,7 +770,9 @@ tmux 完成验证后再决定是否移除 Zellij。
   tmux 3.7b server、Resurrect、Continuum、SessionX 和快捷键可用；
   测试 server 已关闭。
 - [ ] 当前 tmux 3.4 server 仍承载两个 Codex 和两个 Neovim；这些任务
-  正常退出后，从 tmux 外停止旧 server，再启动正式的 3.7b server。
+  正常退出后，从 tmux 外运行
+  `./tmux-tools/finish-server-migration.sh --switch`；脚本会拒绝终止仍有
+  非交互 Shell 前台任务的 server。
 - [ ] 验证 `Ctrl-a`、`Alt-hjkl`、`Alt-s`、分屏、复制模式、SessionX、
   Resurrect 和 Continuum。
 - [ ] 验证稳定后清理重复的 `~/.tmux` 上游仓库。

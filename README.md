@@ -121,6 +121,23 @@ WSL 中完成端到端验证，目前不能视为正式切换完成。
 `git@github.com:christsui1228/tmux-config.git`。如果路径属于其他仓库或
 普通目录，它会停止而不会覆盖；已有正确仓库不会被自动更新。
 
+从旧 tmux server 切换到 Home Manager 版本时，先检查迁移条件：
+
+```bash
+./tmux-tools/finish-server-migration.sh --check
+```
+
+正常退出所有 Node、Neovim 等前台任务并脱离 tmux 后，在新的普通终端中
+执行：
+
+```bash
+./tmux-tools/finish-server-migration.sh --switch
+```
+
+脚本检测到非交互 Shell 任务时会拒绝停止旧 server；切换成功后会启动
+Nix tmux、使用最近 24 小时内的 Resurrect 快照恢复 session，并验证
+server 与 client 版本一致。
+
 默认 Node 版本也可以独立恢复：
 
 ```bash
