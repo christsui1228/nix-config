@@ -139,7 +139,9 @@ tmux_migration_collect_blockers() {
 	local pane_description
 
 	tmux_migration_blockers=()
-	[[ -n "$tmux_migration_server_version" ]] || return
+	if [[ -z "$tmux_migration_server_version" ]]; then
+		return 0
+	fi
 
 	while IFS=$'\t' read -r pane_command pane_description; do
 		case "$pane_command" in
@@ -180,6 +182,7 @@ tmux_migration_wait_for_session() {
 tmux_migration_restore_snapshot() {
 	local resurrect_entry
 	local restore_script
+	local socket_path
 
 	[[ -r "$TMUX_MIGRATION_PLUGIN_CONFIG" ]] ||
 		tmux_migration_fail "找不到 Nix 插件配置：$TMUX_MIGRATION_PLUGIN_CONFIG"
@@ -197,7 +200,13 @@ tmux_migration_restore_snapshot() {
 		return
 	fi
 
-	PATH="$HOME/.nix-profile/bin:$PATH" "$restore_script" quiet || true
+	socket_path="$("$TMUX_MIGRATION_BIN" display-message -p '#{socket_path}')"
+	[[ -n "$socket_path" ]] ||
+		tmux_migration_fail "无法读取新 tmux server 的 socket 路径。"
+
+	TMUX="${socket_path},0,0" \
+		PATH="$HOME/.nix-profile/bin:$PATH" \
+		"$restore_script" quiet || true
 	tmux_migration_wait_for_session "$tmux_migration_snapshot_session" ||
 		tmux_migration_fail \
 			"新 server 已启动，但 Resurrect 没有恢复 session；保留占位 session 供人工检查。"
@@ -209,30 +218,43 @@ tmux_migration_switch_server() {
 	[[ -z "${TMUX:-}" ]] ||
 		tmux_migration_fail "--switch 必须从 tmux 外的新终端运行。"
 
+	if [[ "$tmux_migration_server_version" == "$tmux_migration_client_version" ]] &&
+		"$TMUX_MIGRATION_BIN" has-session -t "$tmux_migration_snapshot_session" 2>/dev/null; then
+		if [[ "$tmux_migration_snapshot_session" != "$TMUX_MIGRATION_PLACEHOLDER_SESSION" ]] &&
+			"$TMUX_MIGRATION_BIN" has-session -t "$TMUX_MIGRATION_PLACEHOLDER_SESSION" 2>/dev/null; then
+			"$TMUX_MIGRATION_BIN" kill-session -t "$TMUX_MIGRATION_PLACEHOLDER_SESSION"
+		fi
+
+		printf '  tmux %s 已运行，%s 已恢复。\n' \
+			"$tmux_migration_client_version" \
+			"$tmux_migration_snapshot_session"
+		printf '连接恢复会话：tmux attach-session -t %q\n' "$tmux_migration_snapshot_session"
+		return
+	fi
+
 	((${#tmux_migration_blockers[@]} == 0)) ||
 		tmux_migration_fail "仍有前台任务，拒绝停止 tmux server。"
 
 	if [[ "$tmux_migration_server_version" == "$tmux_migration_client_version" ]]; then
-		printf '  server 已是 tmux %s，无需切换。\n' "$tmux_migration_client_version"
-		return
-	fi
+		printf '  server 已是 tmux %s。\n' "$tmux_migration_client_version"
+	else
+		if [[ -n "$tmux_migration_server_version" ]]; then
+			tmux_migration_log "停止 tmux $tmux_migration_server_version server"
+			"$TMUX_MIGRATION_BIN" kill-server
+		fi
 
-	if [[ -n "$tmux_migration_server_version" ]]; then
-		tmux_migration_log "停止 tmux $tmux_migration_server_version server"
-		"$TMUX_MIGRATION_BIN" kill-server
+		tmux_migration_log "启动 tmux $tmux_migration_client_version server"
+		env \
+			-u TMUX \
+			-u TMUX_PANE \
+			-u TMUX_PROGRAM \
+			-u TMUX_SOCKET \
+			"$TMUX_MIGRATION_BIN" \
+			new-session \
+			-d \
+			-s "$TMUX_MIGRATION_PLACEHOLDER_SESSION" \
+			-c "$HOME"
 	fi
-
-	tmux_migration_log "启动 tmux $tmux_migration_client_version server"
-	env \
-		-u TMUX \
-		-u TMUX_PANE \
-		-u TMUX_PROGRAM \
-		-u TMUX_SOCKET \
-		"$TMUX_MIGRATION_BIN" \
-		new-session \
-		-d \
-		-s "$TMUX_MIGRATION_PLACEHOLDER_SESSION" \
-		-c "$HOME"
 
 	new_server_version="$("$TMUX_MIGRATION_BIN" display-message -p '#{version}')"
 	[[ "$new_server_version" == "$tmux_migration_client_version" ]] ||

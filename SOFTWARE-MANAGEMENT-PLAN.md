@@ -362,10 +362,9 @@ bootstrap 会在该仓库不存在时通过 SSH 克隆；已有正确仓库只�
 `~/.tmux` 上游仓库中的 vi-mode 修改已经存在于当前生效的个人配置，
 不需要保留为第二个配置来源。
 
-当前正式会话仍由 tmux 3.4 server 承载，其中运行着两个 Codex 和两个
-Neovim，不能在任务完成前直接停止。已经在关闭 pane 内容捕获的前提下
-保存 Resurrect 快照，并使用隔离 socket 确认 tmux 3.7b 与个人配置可
-正常加载。
+`daily` 已由 tmux 3.7b server 承载。切换前已在关闭 pane 内容捕获的
+前提下保存 Resurrect 快照；恢复后保留了两个窗口、五个 pane 和两个
+Neovim，原有 Codex pane 以 Fish 空闲 pane 恢复，避免意外重启旧任务。
 
 Resurrect、Continuum 和 SessionX 已改由锁定 nixpkgs 提供，Oh My Tmux
 的插件自动更新和自动卸载均已关闭。清理 APT tmux、Zellij 或 `~/.tmux`
