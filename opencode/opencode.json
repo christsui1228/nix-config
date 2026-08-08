@@ -1,0 +1,82 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "tokenus/glm-5.2",
+  "small_model": "tokenus/glm-5.2",
+  "provider": {
+    "tokenus": {
+      "npm": "@ai-sdk/anthropic",
+      "name": "Tokenus",
+      "options": {
+        "baseURL": "https://tokenus.net/v1",
+        "apiKey": "sk-GSyHFdMYk67NIxaGAPif1Xe37ZyC6Mpsg2lyA85HFKmBlULi"
+      },
+      "models": {
+        "glm-5.2": {
+          "limit": {
+            "context": 1000000,
+            "output": 32000
+          },
+          "reasoning": true
+        },
+        "deepseek-v4-flash-0731": {
+          "limit": {
+            "context": 1000000,
+            "output": 32000
+          },
+          "reasoning": true
+        },
+        "gpt-5.6-sol": {
+          "limit": {
+            "context": 1000000,
+            "output": 32000
+          },
+          "reasoning": true
+        }
+      }
+    }
+  },
+  "mcp": {
+    "projectfs": {
+      "type": "local",
+      "command": [
+        "docker",
+        "run",
+        "-i",
+        "--rm",
+        "--network",
+        "none",
+        "--user",
+        "1000:1000",
+        "--mount",
+        "type=bind,src=/home/chris/coding,dst=/workspace/coding",
+        "mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67",
+        "/workspace/coding"
+      ],
+      "enabled": true,
+      "timeout": 30000
+    },
+    "obsidian": {
+      "type": "remote",
+      "url": "http://127.0.0.1:27123/mcp/",
+      "enabled": true,
+      "headers": {
+        "Authorization": "Bearer {env:OBSIDIAN_API_KEY}"
+      },
+      "timeout": 10000
+    }
+  },
+  "permission": {
+    "projectfs_write_file": "ask",
+    "projectfs_edit_file": "ask",
+    "projectfs_create_directory": "ask",
+    "projectfs_move_file": "ask",
+    "obsidian_vault_write": "ask",
+    "obsidian_vault_append": "ask",
+    "obsidian_vault_patch": "ask",
+    "obsidian_vault_move": "ask",
+    "obsidian_vault_copy": "ask",
+    "obsidian_open_file": "ask",
+    "obsidian_vault_delete": "deny",
+    "obsidian_command_execute": "deny"
+  }
+}
